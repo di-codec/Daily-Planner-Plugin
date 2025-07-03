@@ -1,11 +1,11 @@
 {
-	"id": "sample-plugin",
-	"name": "Sample Plugin",
+	"id": "daily-planner-plugin",
+	"name": "Daily Planner Plugin",
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
-	"description": "Demonstrates some of the capabilities of the Obsidian API.",
-	"author": "Obsidian",
-	"authorUrl": "https://obsidian.md",
-	"fundingUrl": "https://obsidian.md/pricing",
+	"description": "A plugin for Obsidian to help you plan your daily tasks.",
+	"author": "Dian",
+	"authorUrl": "https://github.com/cov393",
+	"fundingUrl": "https://github.com/cov393/Daily-Planner-Plugin.git",
 	"isDesktopOnly": false
 }
