@@ -1,4 +1,6 @@
-import { Notice, Plugin, addIcon, TAbstractFile, TFolder, TFile } from 'obsidian';
+import { Notice, Plugin, addIcon, TFile } from 'obsidian';
+import { appendSelfDevelopmentTask } from './utils/selfDev';
+
 
 export default class MyPlugin extends Plugin {
     async onload() {
@@ -16,9 +18,11 @@ export default class MyPlugin extends Plugin {
 
         this.addRibbonIcon('circle', 'Manager', async () => {
             const folderPath = "Daily Planner";
-            const filePath = `${folderPath}/Daily Tasks.md`;
+            const filePathSelfDev = `${folderPath}/Self Development.md`;
+            const filePathJobApplication = `${folderPath}/Job Application Tracker.md`;
+            const filePathHelth = `${folderPath}/Health Tracker.md`;
                 
-            // Проверяем и создаём папку
+            // Folder checking and creation
             let folder = this.app.vault.getAbstractFileByPath(folderPath);
             if (!folder) {
                 console.log('Creating folder:', folderPath);
@@ -28,23 +32,42 @@ export default class MyPlugin extends Plugin {
                 console.log('Folder exists after creation:', !!folder);
             }
 
-            // Проверяем и создаём файл
-            let file = this.app.vault.getAbstractFileByPath(filePath);
-            if (!file) {
-                console.log('Creating file:', filePath);
-                file = await this.app.vault.create(filePath, "");
+            // Checking and Creation Self Development file
+            let fileSelfDev = this.app.vault.getAbstractFileByPath(filePathSelfDev);
+            if (!fileSelfDev) {
+                console.log('Creating file:', filePathSelfDev);
+                fileSelfDev = await this.app.vault.create(filePathSelfDev, "");
                 new Notice('File "Daily Tasks.md" created!');
             }
+            if (fileSelfDev instanceof TFile) {
+                await appendSelfDevelopmentTask(this.app, fileSelfDev as TFile);
+            } 
 
-            // Проверяем тип файла и добавляем задачу
-            if (file instanceof TFile) {
-                console.log('Appending to file:', file.path);
-                await this.app.vault.append(file, "- [ ] New task\n");
-                new Notice('New task added!');
-            } else {
-                new Notice('Error: File is not a TFile or could not be created.');
-                console.log('File type error:', file);
+            // Checking and Creaation Job Application file
+            let fileJobApplication  = this.app.vault.getAbstractFileByPath(filePathJobApplication);
+            if (!fileJobApplication){
+                console.log('Creatin file:', filePathJobApplication);
+                fileJobApplication = await this.app.vault.create(filePathJobApplication, "");
+                new Notice ('File "Job Application Tracker.md" created! ');
             }
+
+            // Checking and Creaation Job Application file
+            let fileHealth  = this.app.vault.getAbstractFileByPath(filePathHelth);
+            if (!fileHealth){
+                console.log('Creatin file:', filePathHelth);
+                fileHealth = await this.app.vault.create(filePathHelth, "");
+                new Notice ('File "Health Tracker.md" created! ');
+            }
+
+            // // Проверяем тип файла и добавляем задачу
+            // if (file instanceof TFile) {
+            //     console.log('Appending to file:', file.path);
+            //     await this.app.vault.append(file, "- [ ] New task\n");
+            //     new Notice('New task added!');
+            // } else {
+            //     new Notice('Error: File is not a TFile or could not be created.');
+            //     console.log('File type error:', file);
+            // }
         });
     }
 

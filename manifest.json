@@ -4,7 +4,7 @@
 	"version": "1.0.0",
 	"minAppVersion": "0.15.0",
 	"description": "A plugin for Obsidian to help you plan your daily tasks.",
-	"author": "Dian",
+	"author": "Diana",
 	"authorUrl": "https://github.com/cov393",
 	"fundingUrl": "https://github.com/cov393/Daily-Planner-Plugin.git",
 	"isDesktopOnly": false
