@@ -18,7 +18,8 @@ export default class MyPlugin extends Plugin {
 
         this.addRibbonIcon('circle', 'Manager', async () => {
             const folderPath = "Daily Planner";
-            const filePathSelfDev = `${folderPath}/Self Development.md`;
+            const folderSelfDevPath = "Self Development";
+            const filePathSelfDev = `${folderPath}/${folderSelfDevPath}/Self Development Records.md`;
             const filePathJobApplication = `${folderPath}/Job Application Tracker.md`;
             const filePathHelth = `${folderPath}/Health Tracker.md`;
                 
@@ -30,6 +31,13 @@ export default class MyPlugin extends Plugin {
                 new Notice('Directory "Daily Planner" created!');
                 folder = this.app.vault.getAbstractFileByPath(folderPath); // Повторная проверка
                 console.log('Folder exists after creation:', !!folder);
+                
+                console.log(`Creatinf inside directory 'Self Development': ${folderSelfDevPath}`);
+                await this.app.vault.createFolder(`${folderPath}/${folderSelfDevPath}`);
+                new Notice('Inside directory "Self Development" created!');
+                folder = this.app.vault.getAbstractFileByPath(folderSelfDevPath);
+                console.log('Inside directory exists after creation:', !!folder)
+
             }
 
             // Checking and Creation Self Development file
@@ -37,7 +45,7 @@ export default class MyPlugin extends Plugin {
             if (!fileSelfDev) {
                 console.log('Creating file:', filePathSelfDev);
                 fileSelfDev = await this.app.vault.create(filePathSelfDev, "");
-                new Notice('File "Daily Tasks.md" created!');
+                new Notice('File "Self Development Records.md" created!');
             }
             if (fileSelfDev instanceof TFile) {
                 await appendSelfDevelopmentTask(this.app, fileSelfDev as TFile);
