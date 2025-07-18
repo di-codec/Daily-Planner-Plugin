@@ -45,26 +45,29 @@ export default class MyPlugin extends Plugin {
             folder = this.app.vault.getAbstractFileByPath(folderPath);
         }
 
-        // Создание подпапки Self Development
+        // Creatin "Self Development" Folder
         if (!this.app.vault.getAbstractFileByPath(`${folderPath}/${folderSelfDevPath}`)) {
             console.log(`Creating inside directory 'Self Development': ${folderSelfDevPath}`);
             await this.app.vault.createFolder(`${folderPath}/${folderSelfDevPath}`);
             new Notice('Inside directory "Self Development" created!');
         }
 
-        // Checking and Creation Self Development file
+        // Checking and Creation "Self Development Records.md" file
         let fileSelfDev = this.app.vault.getAbstractFileByPath(filePathSelfDev);
         if (!fileSelfDev) {
             console.log('Creating file:', filePathSelfDev);
             fileSelfDev = await this.app.vault.create(filePathSelfDev, "");
             new Notice('File "Self Development Records.md" created!');
         }
+
+        //=======================================================
         if (fileSelfDev instanceof TFile) {
             await this.selfDevManager.createDailySection(); // Создаем секцию на сегодня
             const tasks = await this.selfDevManager.getTodayTasks();
             new Notice(`Сегодняшние задачи: ${tasks.length > 0 ? tasks.join(', ') : 'нет задач'}`);
             await this.selfDevManager.migrateUnfinishedTasks(); // Переносим незавершенные задачи
         }
+        //=======================================================
 
         // Checking and Creation Job Application file
         let fileJobApplication = this.app.vault.getAbstractFileByPath(filePathJobApplication);
@@ -86,16 +89,16 @@ export default class MyPlugin extends Plugin {
         // Регистрация пользовательского вида (виджета)
         this.registerView("self-dev-view", (leaf) => new SelfDevView(leaf, this.selfDevManager));
 
-        // Добавление иконки для открытия виджета
-        this.addRibbonIcon("circle", "Открыть Self Dev", () => {
-        const rightLeaf = this.app.workspace.getRightLeaf(false);
-        if (rightLeaf) {
-            rightLeaf.setViewState({
-            type: "self-dev-view",
-            active: true,
-            });
-        }
-        });
+        // // Добавление иконки для открытия виджета
+        // this.addRibbonIcon("circle", "Открыть Self Dev", () => {
+        // const rightLeaf = this.app.workspace.getRightLeaf(false);
+        // if (rightLeaf) {
+        //     rightLeaf.setViewState({
+        //     type: "self-dev-view",
+        //     active: true,
+        //     });
+        // }
+        // });
     }
 
     async onunload() {
