@@ -1,125 +1,107 @@
-// Импортируем необходимые типы и классы из Obsidian API
+// selfDevModel.ts
 import { App, Notice, TFile } from "obsidian";
 
-// Класс для управления ежедневными задачами пользователя
 export class SelfDevManager {
-    private app: App; // Экземпляр Obsidian-приложения
+    private app: App;
     private settings: {
-        mainFileDirectory: string;   // Основная папка (корень)
-        taskFileDirectory: string;   // Папка, где лежит файл с задачами
-        taskFilePath: string;        // Путь к файлу задач
+        mainFileDirectory: string;
+        taskFileDirectory: string;
     };
 
-    // Конструктор класса — получает приложение и настройки
-    constructor(app: App, settings: { mainFileDirectory: string; taskFileDirectory: string; taskFilePath: string }) {
+    constructor(app: App, settings: { mainFileDirectory: string; taskFileDirectory: string }) {
         this.app = app;
         this.settings = settings;
     }
 
-    // Метод: создать ежедневную секцию задач на сегодня, если её ещё нет
-    async createDailySection(): Promise<void> {
-        const filePath = `${this.settings.mainFileDirectory}/${this.settings.taskFileDirectory}/${this.settings.taskFilePath}`;
+    // Получение имени файла по дате
+    private getFileNameByDate(date: Date): string {
+        const dateStr = date.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+        return `📅 ${dateStr}.md`;
+    }
+
+    // Получение пути к файлу задач по дате
+    private getFilePathByDate(date: Date): string {
+        return `${this.settings.mainFileDirectory}/${this.settings.taskFileDirectory}/${this.getFileNameByDate(date)}`;
+    }
+
+    // Создание нового файла задач на сегодня, если он еще не создан
+    async createDailyFile(): Promise<void> {
+        const filePath = this.getFilePathByDate(new Date());
         let file = this.app.vault.getAbstractFileByPath(filePath) as TFile | null;
 
-        // Если файл задач не существует — создаём его
         if (!file) {
-            file = await this.app.vault.create(filePath, "");
-            new Notice(`Файл ${this.settings.taskFilePath} создан!`);
-        }
-
-        if (file instanceof TFile) {
-            const content = await this.app.vault.read(file);
-            // Получаем сегодняшнюю дату в формате "17 July 2025"
-            const today = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
-            const sectionHeader = `## 📅 ${today}\n- [ ]\n`;
-
-            // Если секция с сегодняшней датой ещё не создана — добавляем
-            if (!content.includes(`## 📅 ${today}`)) {
-                await this.app.vault.append(file, sectionHeader);
-                new Notice(`Секция для ${today} создана!`);
-            } else {
-                new Notice(`Секция для ${today} уже существует!`);
-            }
+            file = await this.app.vault.create(filePath, `# Self Development - ${new Date().toLocaleDateString("en-GB")}\n`);
+            new Notice(`Fail "${file.name}" created!`);
+        } else {
+            new Notice(`Fail "${file.name}" already exists!`);
         }
     }
 
-    // Метод: получить список незавершённых задач на сегодня
+    // Получить незавершенные задачи на сегодня
     async getTodayTasks(): Promise<string[]> {
-        const filePath = `${this.settings.mainFileDirectory}/${this.settings.taskFileDirectory}/${this.settings.taskFilePath}`;
+        const filePath = this.getFilePathByDate(new Date());
         const file = this.app.vault.getAbstractFileByPath(filePath) as TFile | null;
 
         if (file instanceof TFile) {
             const content = await this.app.vault.read(file);
-            const today = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
-            const sectionStart = `## 📅 ${today}\n`;
-
-            // Определяем конец секции (следующий заголовок ## 📅)
-            const sectionEnd = content.indexOf(`## 📅`, content.indexOf(sectionStart) + 1);
-            const sectionContent = sectionEnd === -1 
-                ? content.substring(content.indexOf(sectionStart)) 
-                : content.substring(content.indexOf(sectionStart), sectionEnd);
-
-            // Фильтруем строки: оставляем только незавершённые задачи (- [ ])
-            const tasks = sectionContent.split('\n')
+            return content
+                .split('\n')
                 .filter(line => line.trim().startsWith('- [') && !line.trim().startsWith('- [x]'))
                 .map(line => line.trim());
-
-            return tasks;
         }
+
         return [];
     }
 
-    // Метод: переносит незавершённые задачи со вчера на сегодня
-    async migrateUnfinishedTasks(): Promise<void> {
-        const filePath = `${this.settings.mainFileDirectory}/${this.settings.taskFileDirectory}/${this.settings.taskFilePath}`;
+    // Добавить задачу в файл на сегодня
+    async appendTask(taskText: string): Promise<void> {
+        const filePath = this.getFilePathByDate(new Date());
         const file = this.app.vault.getAbstractFileByPath(filePath) as TFile | null;
 
         if (file instanceof TFile) {
-            const content = await this.app.vault.read(file);
-
-            // Получаем даты
-            const today = new Date().toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
-            const yesterday = new Date();
-            yesterday.setDate(yesterday.getDate() - 1);
-            const yesterdayStr = yesterday.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
-
-            const yesterdaySectionStart = content.indexOf(`## 📅 ${yesterdayStr}\n`);
-
-            if (yesterdaySectionStart !== -1) {
-                const yesterdaySectionEnd = content.indexOf(`## 📅`, yesterdaySectionStart + 1);
-                const sectionContent = yesterdaySectionEnd === -1
-                    ? content.substring(yesterdaySectionStart)
-                    : content.substring(yesterdaySectionStart, yesterdaySectionEnd);
-
-                const unfinishedTasks = sectionContent.split('\n')
-                    .filter(line => line.trim().startsWith('- [') && !line.trim().startsWith('- [x]'))
-                    .map(line => line.trim());
-
-                if (unfinishedTasks.length > 0) {
-                    // Создаём секцию на сегодня, если её ещё нет
-                    const todaySectionStart = content.indexOf(`## 📅 ${today}\n`);
-                    if (todaySectionStart === -1) {
-                        await this.createDailySection();
-                    }
-
-                    // Добавляем задачи в конец файла
-                    await this.app.vault.append(file, unfinishedTasks.join('\n') + '\n');
-                    new Notice(`Перенесено ${unfinishedTasks.length} незавершенных задач из ${yesterdayStr}!`);
-
-                    // Удаляем задачи из вчерашней секции
-                    const newContent = content.replace(sectionContent, sectionContent.replace(unfinishedTasks.join('\n'), '').trim());
-                    await this.app.vault.modify(file, newContent);
-                }
-            }
+            await this.app.vault.append(file, `- [ ] ${taskText}\n`);
+        } else {
+            // Если файл не существует — создаем и добавляем
+            await this.createDailyFile();
+            const newFile = this.app.vault.getAbstractFileByPath(filePath) as TFile;
+            await this.app.vault.append(newFile, `- [ ] ${taskText}\n`);
         }
     }
 
-    // Метод: добавляет новую задачу в файл
-    public async appendTask(taskText: string): Promise<void> {
-        const filePath = `${this.settings.mainFileDirectory}/${this.settings.taskFileDirectory}/${this.settings.taskFilePath}`;
-        const file = this.app.vault.getAbstractFileByPath(filePath);
-        if (file instanceof TFile) {
-            await this.app.vault.append(file, `- [ ] ${taskText}\n`);
+    // Переносим незавершённые задачи со вчера на сегодня
+    async migrateUnfinishedTasks(): Promise<void> {
+        const today = new Date();
+        const yesterday = new Date();
+        yesterday.setDate(today.getDate() - 1);
+
+        const yesterdayFilePath = this.getFilePathByDate(yesterday);
+        const todayFilePath = this.getFilePathByDate(today);
+
+        const yesterdayFile = this.app.vault.getAbstractFileByPath(yesterdayFilePath) as TFile | null;
+        const todayFile = this.app.vault.getAbstractFileByPath(todayFilePath) as TFile | null;
+
+        if (!(yesterdayFile instanceof TFile)) {
+            new Notice("File from yesterday doesn't exists.");
+            return;
         }
+
+        const content = await this.app.vault.read(yesterdayFile);
+        const unfinishedTasks = content
+            .split('\n')
+            .filter(line => line.trim().startsWith('- [') && !line.trim().startsWith('- [x]'))
+            .map(line => line.trim());
+
+        if (unfinishedTasks.length === 0) {
+            new Notice("There are no unfinished tasks to transfer.");
+            return;
+        }
+
+        if (!(todayFile instanceof TFile)) {
+            await this.createDailyFile();
+        }
+
+        const file = this.app.vault.getAbstractFileByPath(todayFilePath) as TFile;
+        await this.app.vault.append(file, unfinishedTasks.join('\n') + '\n');
+        new Notice(`Transfared ${unfinishedTasks.length} tasks from file ${this.getFileNameByDate(yesterday)}!`);
     }
 }
