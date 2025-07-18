@@ -12,17 +12,10 @@ export default class MyPlugin extends Plugin {
 
         this.selfDevManager = new SelfDevManager(this.app, {
             mainFileDirectory: "Daily Planner",
-            taskFileDirectory: "Self Development" // Без taskFilePath — его больше нет
+            taskFileDirectory: "Self Development" 
         });
         
-        // Инициализируем SelfDevManager с настройками
-        // this.selfDevManager = new SelfDevManager(this.app, {
-        // mainFileDirectory: "Daily Planner",
-        // taskFileDirectory: "Self Development",
-        // // taskFilePath: "Self Development Records.md"
-        // });
-
-        // Команда для добавления задачи
+        // Adding tasks command
         this.addCommand({
         id: 'add-task',
         name: 'Add Task',
@@ -32,11 +25,10 @@ export default class MyPlugin extends Plugin {
             new Notice(`Сегодняшние задачи: ${tasks.length > 0 ? tasks.join(', ') : 'нет задач'}`);
         }
         });
-
-        // Создание структуры и управление задачами через ribbon icon
+        // Structure and tasks manager creation through 2ribbon icon"
         this.addRibbonIcon('circle', 'Manager', async () => {
         const folderPath = "Daily Planner";
-        const folderSelfDevPath = "Self Development";
+        const folderSelfDevPath = `Self Development`;
         const filePathSelfDev = `${folderPath}/${folderSelfDevPath}/Notes.md`;
         const filePathJobApplication = `${folderPath}/Job Application Tracker.md`;
         const filePathHealth = `${folderPath}/Health Tracker.md`;
@@ -61,16 +53,16 @@ export default class MyPlugin extends Plugin {
         let fileSelfDev = this.app.vault.getAbstractFileByPath(filePathSelfDev);
         if (!fileSelfDev) {
             console.log('Creating file:', filePathSelfDev);
-            fileSelfDev = await this.app.vault.create(filePathSelfDev, "");
+            fileSelfDev = await this.app.vault.create(filePathSelfDev, "`Explanetion of what this section is for`");
             new Notice('File "Notes.md" created!');
         }
 
         //=======================================================
         if (fileSelfDev instanceof TFile) {
-            await this.selfDevManager.createDailyFile(); // Создаем секцию на сегодня
+            await this.selfDevManager.createDailyFile(); // Creatin the section for today
             const tasks = await this.selfDevManager.getTodayTasks();
-            new Notice(`Сегодняшние задачи: ${tasks.length > 0 ? tasks.join(', ') : 'нет задач'}`);
-            await this.selfDevManager.migrateUnfinishedTasks(); // Переносим незавершенные задачи
+            new Notice(`Toda tasks: ${tasks.length > 0 ? tasks.join(', ') : 'no tasks found'}`);
+            await this.selfDevManager.migrateUnfinishedTasks(); // Transfare unfinished tasks
         }
         //=======================================================
 
@@ -90,79 +82,9 @@ export default class MyPlugin extends Plugin {
             new Notice('File "Health Tracker.md" created!');
         }
         });
-
-        // Регистрация пользовательского вида (виджета)
-        this.registerView("self-dev-view", (leaf) => new SelfDevView(leaf, this.selfDevManager));
-
-        // // Добавление иконки для открытия виджета
-        // this.addRibbonIcon("circle", "Открыть Self Dev", () => {
-        // const rightLeaf = this.app.workspace.getRightLeaf(false);
-        // if (rightLeaf) {
-        //     rightLeaf.setViewState({
-        //     type: "self-dev-view",
-        //     active: true,
-        //     });
-        // }
-        // });
     }
 
     async onunload() {
         console.log('unloading plugin');
-    }
-}
-
-// Класс для пользовательского вида (виджета) с формой для задач
-class SelfDevView extends ItemView {
-    constructor(leaf: WorkspaceLeaf, private manager: SelfDevManager) {
-        super(leaf);
-    }
-
-    getViewType() {
-        return "self-dev-view";
-    }
-
-    getDisplayText() {
-        return "Self Development";
-    }
-
-    async onOpen() {
-        const container = this.containerEl.children[1];
-        container.empty();
-
-        // Секция "Сегодняшние задачи"
-        const tasks = await this.manager.getTodayTasks();
-        container.createEl("h2", { text: "✅ Сегодняшние задачи" });
-        const taskList = container.createEl("ul");
-        tasks.forEach(task => taskList.createEl("li", { text: task }));
-
-        // Форма для добавления новой задачи
-        container.createEl("h2", { text: "🆕 Добавить задачу" });
-        const form = container.createEl("form");
-        const input = form.createEl("input", { type: "text", placeholder: "Введите задачу..." });
-        const submit = form.createEl("button", { text: "Добавить" });
-        submit.type = "submit";
-
-        form.addEventListener("submit", async (e) => {
-        e.preventDefault();
-        const taskText = input.value.trim();
-        if (taskText) {
-            await this.manager.appendTask(taskText);
-            input.value = "";
-            this.onOpen();
-            new Notice(`Задача "${taskText}" добавлена!`);
-        }
-        });
-
-        // Кнопка "Создать новую секцию задач"
-        container.createEl("h2", { text: "🆕 Управление" });
-        const button = container.createEl("button", { text: "Создать новую секцию задач" });
-        button.addEventListener("click", async () => {
-        await this.manager.createDailyFile();
-        this.onOpen(); // Обновляем вид
-        });
-    }
-
-    async onClose() {
-        // Очистка при закрытии
     }
 }
