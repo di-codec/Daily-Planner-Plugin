@@ -4,6 +4,7 @@
 
 - `обновление дат работает` ✅
 - [x] откомментировать selfDevModel.ts
-- [ ] обновить selfDevModel:
-  - [ ] удалить файл `"Self Development Records.md"` 
-  - [ ] поменять `"Self Development Records.md"` на самообновляющие файлы с датами
+- [x] обновить selfDevModel:
+  - [x] удалить файл `"Self Development Records.md"` 
+  - [x] поменять `"Self Development Records.md"` на самообновляющие файлы с датами
+- [ ] need to add explanation for Node.md file
