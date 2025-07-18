@@ -10,19 +10,24 @@ export default class MyPlugin extends Plugin {
 
         addIcon('circle', '<circle cx="50" cy="50" r="50" fill="currentColor"/>');
 
-        // Инициализируем SelfDevManager с настройками
         this.selfDevManager = new SelfDevManager(this.app, {
-        mainFileDirectory: "Daily Planner",
-        taskFileDirectory: "Self Development",
-        taskFilePath: "Self Development Records.md"
+            mainFileDirectory: "Daily Planner",
+            taskFileDirectory: "Self Development" // Без taskFilePath — его больше нет
         });
+        
+        // Инициализируем SelfDevManager с настройками
+        // this.selfDevManager = new SelfDevManager(this.app, {
+        // mainFileDirectory: "Daily Planner",
+        // taskFileDirectory: "Self Development",
+        // // taskFilePath: "Self Development Records.md"
+        // });
 
         // Команда для добавления задачи
         this.addCommand({
         id: 'add-task',
         name: 'Add Task',
         callback: async () => {
-            await this.selfDevManager.createDailySection();
+            await this.selfDevManager.createDailyFile();
             const tasks = await this.selfDevManager.getTodayTasks();
             new Notice(`Сегодняшние задачи: ${tasks.length > 0 ? tasks.join(', ') : 'нет задач'}`);
         }
@@ -32,7 +37,7 @@ export default class MyPlugin extends Plugin {
         this.addRibbonIcon('circle', 'Manager', async () => {
         const folderPath = "Daily Planner";
         const folderSelfDevPath = "Self Development";
-        const filePathSelfDev = `${folderPath}/${folderSelfDevPath}/Self Development Records.md`;
+        const filePathSelfDev = `${folderPath}/${folderSelfDevPath}/Notes.md`;
         const filePathJobApplication = `${folderPath}/Job Application Tracker.md`;
         const filePathHealth = `${folderPath}/Health Tracker.md`;
 
@@ -52,17 +57,17 @@ export default class MyPlugin extends Plugin {
             new Notice('Inside directory "Self Development" created!');
         }
 
-        // Checking and Creation "Self Development Records.md" file
+        // Checking and Creation "Notes.md" file
         let fileSelfDev = this.app.vault.getAbstractFileByPath(filePathSelfDev);
         if (!fileSelfDev) {
             console.log('Creating file:', filePathSelfDev);
             fileSelfDev = await this.app.vault.create(filePathSelfDev, "");
-            new Notice('File "Self Development Records.md" created!');
+            new Notice('File "Notes.md" created!');
         }
 
         //=======================================================
         if (fileSelfDev instanceof TFile) {
-            await this.selfDevManager.createDailySection(); // Создаем секцию на сегодня
+            await this.selfDevManager.createDailyFile(); // Создаем секцию на сегодня
             const tasks = await this.selfDevManager.getTodayTasks();
             new Notice(`Сегодняшние задачи: ${tasks.length > 0 ? tasks.join(', ') : 'нет задач'}`);
             await this.selfDevManager.migrateUnfinishedTasks(); // Переносим незавершенные задачи
@@ -152,7 +157,7 @@ class SelfDevView extends ItemView {
         container.createEl("h2", { text: "🆕 Управление" });
         const button = container.createEl("button", { text: "Создать новую секцию задач" });
         button.addEventListener("click", async () => {
-        await this.manager.createDailySection();
+        await this.manager.createDailyFile();
         this.onOpen(); // Обновляем вид
         });
     }
