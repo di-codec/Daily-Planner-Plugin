@@ -6,4 +6,4 @@
 - [x] откомментировать selfDevModel.ts
 - [ ] обновить selfDevModel:
   - [ ] удалить файл `"Self Development Records.md"` 
-  - [ ]поменять `"Self Development Records.md"` на самообновляющие файлы с датами
+  - [ ] поменять `"Self Development Records.md"` на самообновляющие файлы с датами
