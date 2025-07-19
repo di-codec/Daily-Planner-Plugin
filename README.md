@@ -8,3 +8,4 @@
   - [x] удалить файл `"Self Development Records.md"` 
   - [x] поменять `"Self Development Records.md"` на самообновляющие файлы с датами
 - [ ] need to add explanation for Node.md file
+- [ ] solve in self development the tasks duplication
