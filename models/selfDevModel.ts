@@ -20,7 +20,8 @@ export class SelfDevManager {
     }
 
     // Получение пути к файлу задач по дате
-    private getFilePathByDate(date: Date): string {
+    // private getFilePathByDate(date: Date): string {
+    public getFilePathByDate(date: Date): string {
         return `${this.settings.mainFileDirectory}/${this.settings.taskFileDirectory}/${this.getFileNameByDate(date)}`;
     }
 
