@@ -1,4 +1,3 @@
-// selfDevModel.ts
 import { App, Notice, TFile } from "obsidian";
 
 export class SelfDevManager {
@@ -13,19 +12,18 @@ export class SelfDevManager {
         this.settings = settings;
     }
 
-    // Получение имени файла по дате
+    // Getting the file name by date
     private getFileNameByDate(date: Date): string {
         const dateStr = date.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
         return `📅 ${dateStr}.md`;
     }
 
-    // Получение пути к файлу задач по дате
-    // private getFilePathByDate(date: Date): string {
+    // Obtaining the path to the task file by date
     public getFilePathByDate(date: Date): string {
         return `${this.settings.mainFileDirectory}/${this.settings.taskFileDirectory}/${this.getFileNameByDate(date)}`;
     }
 
-    // Создание нового файла задач на сегодня, если он еще не создан
+    // Creating a new task file for today if it hasn't been created yet
     async createDailyFile(): Promise<void> {
         const filePath = this.getFilePathByDate(new Date());
         let file = this.app.vault.getAbstractFileByPath(filePath) as TFile | null;
@@ -38,7 +36,7 @@ export class SelfDevManager {
         }
     }
 
-    // Получить незавершенные задачи на сегодня
+    // Retrieve incomplete tasks for today
     async getTodayTasks(): Promise<string[]> {
         const filePath = this.getFilePathByDate(new Date());
         const file = this.app.vault.getAbstractFileByPath(filePath) as TFile | null;
@@ -54,7 +52,7 @@ export class SelfDevManager {
         return [];
     }
 
-    // Добавить задачу в файл на сегодня
+    // Add a task to today's file
     async appendTask(taskText: string): Promise<void> {
         const filePath = this.getFilePathByDate(new Date());
         const file = this.app.vault.getAbstractFileByPath(filePath) as TFile | null;
@@ -69,7 +67,7 @@ export class SelfDevManager {
         }
     }
 
-    // Переносим незавершённые задачи со вчера на сегодня
+    // Transfer incomplete tasks from yesterday to today
     async migrateUnfinishedTasks(): Promise<void> {
         const today = new Date();
         const yesterday = new Date();
