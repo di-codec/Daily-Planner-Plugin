@@ -1,5 +1,28 @@
 # Daily Planner Manager Plugin for Obsidian
 
+## System Arhitecture
+
+```markdown
+Daily Planner
+	⌊ Daily Notes
+		⌊ 17 July 2025.md
+		  18 July 2025.md
+		  19 July 2025.md
+		  20 July 2025.md
+		  21 July 2025.md
+		  22 July 2025.md
+		  23 July 2025.md
+		  Note.md
+	⌊ Health Tracker
+		⌊ July 2025
+		      ⌊ 1 - 6.md
+		  	7 - 13.md
+		  	14 - 20.md
+		  	21 - 27.md
+		  	28 - 21.md
+	⌊ Summary.md
+```
+
 ## To-do list:
 
 - `обновление дат работает` ✅
