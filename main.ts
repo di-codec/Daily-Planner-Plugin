@@ -3,7 +3,7 @@ import { Notice, Plugin, addIcon, TAbstractFile, TFolder, TFile, WorkspaceLeaf, 
 import { SelfDevManager } from './models/selfDevModel';
 // import { HealthTrackerManager } from "./models/healthTrackerModel";
 // import { DataUIView, DATA_UI_VIEW_TYPE } from './models/dataUI';
-import { SummaryManager } from "./models/summaryManager";
+// import { SummaryManager } from "./models/summaryManager";
 
 
 export default class MyPlugin extends Plugin {
@@ -93,8 +93,8 @@ export default class MyPlugin extends Plugin {
         });
 
         // SummaryManager Initialization
-        const summaryManager = new SummaryManager(this.app);
-        await summaryManager.generateSummary();
+        // const summaryManager = new SummaryManager(this.app);
+        // await summaryManager.generateSummary();
     }
 
     async onunload() {

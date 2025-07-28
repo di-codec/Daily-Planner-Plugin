@@ -60,7 +60,7 @@ export class SelfDevManager {
         if (file instanceof TFile) {
             await this.app.vault.append(file, `- [ ] ${taskText}\n`);
         } else {
-            // Если файл не существует — создаем и добавляем
+            // If the file doesn't exist - create it and add the task
             await this.createDailyFile();
             const newFile = this.app.vault.getAbstractFileByPath(filePath) as TFile;
             await this.app.vault.append(newFile, `- [ ] ${taskText}\n`);
