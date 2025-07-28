@@ -8,7 +8,7 @@ import { SummaryManager } from "./models/summaryManager";
 
 export default class MyPlugin extends Plugin {
     private selfDevManager: SelfDevManager;
-    private healthTrackerManager: HealthTrackerManager;
+    // private healthTrackerManager: HealthTrackerManager;
 
     async onload() {
         console.log('loading plugin');
@@ -31,21 +31,21 @@ export default class MyPlugin extends Plugin {
         }
         });
 
-        // Инициализация HealthTrackerManager
-        this.healthTrackerManager = new HealthTrackerManager(this.app, "Daily Planner/Health Tracker.md");
+        // // Инициализация HealthTrackerManager
+        // this.healthTrackerManager = new HealthTrackerManager(this.app, "Daily Planner/Health Tracker.md");
 
-        // Новая команда для обновления календаря Health Tracker
-        this.addCommand({
-            id: 'update-health-tracker',
-            name: 'Update Health Tracker Calendar',
-            callback: async () => {
-                await this.healthTrackerManager.generateMonthlyCalendar();
-                new Notice('Calendar "Health Tracker.md" updated!');
-                // await this.selfDevManager.createDailyFile();
-                // const tasks = await this.selfDevManager.getTodayTasks();
-                // new Notice(`Сегодняшние задачи: ${tasks.length > 0 ? tasks.join(', ') : 'нет задач'}`);
-            }
-        });
+        // // Новая команда для обновления календаря Health Tracker
+        // this.addCommand({
+        //     id: 'update-health-tracker',
+        //     name: 'Update Health Tracker Calendar',
+        //     callback: async () => {
+        //         await this.healthTrackerManager.generateMonthlyCalendar();
+        //         new Notice('Calendar "Health Tracker.md" updated!');
+        //         // await this.selfDevManager.createDailyFile();
+        //         // const tasks = await this.selfDevManager.getTodayTasks();
+        //         // new Notice(`Сегодняшние задачи: ${tasks.length > 0 ? tasks.join(', ') : 'нет задач'}`);
+        //     }
+        // });
         
         // Structure and tasks manager creation through 2ribbon icon"
         this.addRibbonIcon('circle', 'Manager', async () => {
@@ -109,17 +109,17 @@ export default class MyPlugin extends Plugin {
             }
 
             // Checking and Creation Health Tracker file
-            let fileHealth = this.app.vault.getAbstractFileByPath(filePathHealth);
-            if (!fileHealth) {
-                console.log('Creating file:', filePathHealth);
-                fileHealth = await this.app.vault.create(filePathHealth, "");
-                new Notice('File "Health Tracker.md" created!');
+            // let fileHealth = this.app.vault.getAbstractFileByPath(filePathHealth);
+            // if (!fileHealth) {
+            //     console.log('Creating file:', filePathHealth);
+            //     fileHealth = await this.app.vault.create(filePathHealth, "");
+            //     new Notice('File "Health Tracker.md" created!');
 
-                await this.healthTrackerManager.generateMonthlyCalendar();
-                // await this.healthTrackerManager.generateYearlyCalendar();
-            } else {
-                await this.healthTrackerManager.generateMonthlyCalendar();
-            }            
+            //     await this.healthTrackerManager.generateMonthlyCalendar();
+            //     // await this.healthTrackerManager.generateYearlyCalendar();
+            // } else {
+            //     await this.healthTrackerManager.generateMonthlyCalendar();
+            // }            
             
         });
 
