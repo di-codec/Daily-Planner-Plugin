@@ -33,3 +33,4 @@ Daily Planner
   - [x] пофиксить дублирование задач
 - [ ] need to add explanation for Node.md file
 - [x] solve in self development the tasks duplication
+- [ ] задокументировать идею этого проекта
