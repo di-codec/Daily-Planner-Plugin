@@ -1,13 +1,14 @@
 // main.ts
 import { Notice, Plugin, addIcon, TAbstractFile, TFolder, TFile, WorkspaceLeaf, ItemView } from 'obsidian';
 import { SelfDevManager } from './models/selfDevModel';
-// import { HealthTrackerManager } from "./models/healthTrackerModel";
+import { HealthTrackerManager } from "./models/healthTrackerModel";
 // import { DataUIView, DATA_UI_VIEW_TYPE } from './models/dataUI';
 // import { SummaryManager } from "./models/summaryManager";
 
 
 export default class MyPlugin extends Plugin {
     private selfDevManager: SelfDevManager;
+    private healthTrackerManager: HealthTrackerManager;
 
     async onload() {
         console.log('loading plugin');
@@ -19,6 +20,11 @@ export default class MyPlugin extends Plugin {
             taskFileDirectory: "Self Development" 
         });
        
+        this.healthTrackerManager = new HealthTrackerManager(this.app, {
+            mainfileDirectory: "Daily Planenr",
+            healthTrackerFileDirectory: "Health Tracker"
+        });
+
         // Adding tasks command
         this.addCommand({
         id: 'add-task',
@@ -33,10 +39,12 @@ export default class MyPlugin extends Plugin {
         // Structure and tasks manager creation through 2ribbon icon"
         this.addRibbonIcon('circle', 'Manager', async () => {
             const folderPath = "Daily Planner";
-            const folderSelfDevPath = `Self Development`;
+            const folderSelfDevPath = "Self Development";
+            const folderHealthTrackerPath = "Health Tracker";
             const filePathSelfDev = `${folderPath}/${folderSelfDevPath}/Notes.md`;
             const filePathJobApplication = `${folderPath}/Job Application Tracker.md`;
-            const filePathHealth = `${folderPath}/Health Tracker.md`;
+            // const filePathHealth = `${folderPath}/${folderHealthTrackerPath}/Health Tracker.md`;
+            const filePathHealth = `${folderPath}/${folderHealthTrackerPath}`;
 
             // Folder checking and creation
             let folder = this.app.vault.getAbstractFileByPath(folderPath);
