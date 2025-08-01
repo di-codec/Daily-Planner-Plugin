@@ -33,5 +33,9 @@ Daily Planner
   - [x] пофиксить дублирование задач
 - [ ] need to add explanation for Node.md file
 - [x] solve in self development the tasks duplication
-- [ ] задокументировать идею этого проекта
+- [x] задокументировать идею этого проекта
 - [ ] отредактировать "DOCUMENTATION.md" файл
+- [ ] Health Tracker:
+	- [ ] датированные директории 
+	- [ ] датированные документы
+	- [ ] имплиментация недельного календаря	
