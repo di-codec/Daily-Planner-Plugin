@@ -19,11 +19,6 @@ export default class MyPlugin extends Plugin {
             mainFileDirectory: "Daily Planner",
             taskFileDirectory: "Self Development" 
         });
-       
-        this.healthTrackerManager = new HealthTrackerManager(this.app, {
-            mainfileDirectory: "Daily Planenr",
-            healthTrackerFileDirectory: "Health Tracker"
-        });
 
         // Adding tasks command
         this.addCommand({
@@ -35,6 +30,23 @@ export default class MyPlugin extends Plugin {
             new Notice(`Сегодняшние задачи: ${tasks.length > 0 ? tasks.join(', ') : 'нет задач'}`);
         }
         });
+
+        this.healthTrackerManager = new HealthTrackerManager(this.app, {
+            // mainfileDirectory: "Daily Planenr",
+            mainFileDirectory: "Daily Planenr",
+            healthTrackerFileDirectory: "Health Tracker"
+        });
+
+        // Adding Health Tracker command
+        this.addCommand({
+            id: 'track health',
+            name: 'Create Weekly Health Tracker',
+            callback: async () => {
+                await this.healthTrackerManager.createWeeklyFile();
+                const tasks = await this.healthTrackerManager.getThisWeekSummary();
+                new Notice(`Health Tracker created: ${tasks.length > 0 ? tasks.join(', ') : 'No content'}`);
+            }
+        });        
         
         // Structure and tasks manager creation through 2ribbon icon"
         this.addRibbonIcon('circle', 'Manager', async () => {
@@ -43,8 +55,8 @@ export default class MyPlugin extends Plugin {
             const folderHealthTrackerPath = "Health Tracker";
             const filePathSelfDev = `${folderPath}/${folderSelfDevPath}/Notes.md`;
             const filePathJobApplication = `${folderPath}/Job Application Tracker.md`;
-            // const filePathHealth = `${folderPath}/${folderHealthTrackerPath}/Health Tracker.md`;
-            const filePathHealth = `${folderPath}/${folderHealthTrackerPath}`;
+            const filePathHealth = `${folderPath}/${folderHealthTrackerPath}/Health Tracker.md`;
+            // const filePathHealth = `${folderPath}/${folderHealthTrackerPath}`;
 
             // Folder checking and creation
             let folder = this.app.vault.getAbstractFileByPath(folderPath);
@@ -61,6 +73,30 @@ export default class MyPlugin extends Plugin {
                 await this.app.vault.createFolder(`${folderPath}/${folderSelfDevPath}`);
                 new Notice('Inside directory "Self Development" created!');
             }
+
+            // =================================================
+            // Checking and Creating HEALTH TRACKER
+            // let fileHealthTracker = this.app.vault.getAbstractFileByPath(filePathHealth);
+            // if (!fileHealthTracker){
+            //     console.log('Health Tracker is connected!')
+            //     fileHealthTracker= await this.app.vault.create(filePathHealth, "`TEST`");
+            //     new Notice('File "Notes.md created!')
+            // }
+
+            if (!this.app.vault.getAbstractFileByPath(`${folderPath}/${folderHealthTrackerPath}`)) {
+                console.log(`Creating inside directory 'Health Tracker': ${folderHealthTrackerPath}`);
+                await this.app.vault.createFolder(`${folderPath}/${folderHealthTrackerPath}`);
+                new Notice('Inside directory "Health Tracker" created!');
+            }
+            // Create "Health Tracker.md" file
+            let fileHealthTracker = this.app.vault.getAbstractFileByPath(filePathHealth);
+            if (!fileHealthTracker) {
+                console.log('Creating file:', filePathHealth);
+                fileHealthTracker = await this.app.vault.create(filePathHealth, "# Health Tracker\n\nOverview of health tracking activities.");
+                new Notice('File "Health Tracker.md" created!');
+            }
+            // =================================================
+
 
             // Checking and Creation "Notes.md" file
             let fileSelfDev = this.app.vault.getAbstractFileByPath(filePathSelfDev);
