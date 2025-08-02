@@ -31,11 +31,11 @@ Daily Planner
   - [x] удалить файл `"Self Development Records.md"` 
   - [x] поменять `"Self Development Records.md"` на самообновляющие файлы с датами
   - [x] пофиксить дублирование задач
-- [ ] need to add explanation for Node.md file
+- [x] need to add explanation for Node.md file
 - [x] solve in self development the tasks duplication
 - [x] задокументировать идею этого проекта
 - [ ] отредактировать "DOCUMENTATION.md" файл
-- [ ] Health Tracker:
-	- [ ] датированные директории 
-	- [ ] датированные документы
+- [x] Health Tracker:
+	- [x] датированные директории 
+	- [x] датированные документы
 	- [x] имплиментация недельного календаря	
