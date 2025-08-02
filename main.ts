@@ -32,8 +32,8 @@ export default class MyPlugin extends Plugin {
         });
 
         this.healthTrackerManager = new HealthTrackerManager(this.app, {
-            // mainfileDirectory: "Daily Planenr",
-            mainFileDirectory: "Daily Planenr",
+            // mainFileDirectory: "Daily Planenr",
+            mainFileDirectory: "Daily Planner",
             healthTrackerFileDirectory: "Health Tracker"
         });
 
@@ -67,36 +67,14 @@ export default class MyPlugin extends Plugin {
                 folder = this.app.vault.getAbstractFileByPath(folderPath);
             }
 
+            //=================== SELF DEVELOPMENT ====================================
+
             // Creatin "Self Development" Folder
             if (!this.app.vault.getAbstractFileByPath(`${folderPath}/${folderSelfDevPath}`)) {
                 console.log(`Creating inside directory 'Self Development': ${folderSelfDevPath}`);
                 await this.app.vault.createFolder(`${folderPath}/${folderSelfDevPath}`);
                 new Notice('Inside directory "Self Development" created!');
             }
-
-            // =================================================
-            // Checking and Creating HEALTH TRACKER
-            // let fileHealthTracker = this.app.vault.getAbstractFileByPath(filePathHealth);
-            // if (!fileHealthTracker){
-            //     console.log('Health Tracker is connected!')
-            //     fileHealthTracker= await this.app.vault.create(filePathHealth, "`TEST`");
-            //     new Notice('File "Notes.md created!')
-            // }
-
-            if (!this.app.vault.getAbstractFileByPath(`${folderPath}/${folderHealthTrackerPath}`)) {
-                console.log(`Creating inside directory 'Health Tracker': ${folderHealthTrackerPath}`);
-                await this.app.vault.createFolder(`${folderPath}/${folderHealthTrackerPath}`);
-                new Notice('Inside directory "Health Tracker" created!');
-            }
-            // Create "Health Tracker.md" file
-            let fileHealthTracker = this.app.vault.getAbstractFileByPath(filePathHealth);
-            if (!fileHealthTracker) {
-                console.log('Creating file:', filePathHealth);
-                fileHealthTracker = await this.app.vault.create(filePathHealth, "# Health Tracker\n\nOverview of health tracking activities.");
-                new Notice('File "Health Tracker.md" created!');
-            }
-            // =================================================
-
 
             // Checking and Creation "Notes.md" file
             let fileSelfDev = this.app.vault.getAbstractFileByPath(filePathSelfDev);
@@ -106,7 +84,6 @@ export default class MyPlugin extends Plugin {
                 new Notice('File "Notes.md" created!');
             }
 
-            //=======================================================
             if (fileSelfDev instanceof TFile) {
                 await this.selfDevManager.createDailyFile(); // Creating the section for today
                 const tasks = await this.selfDevManager.getTodayTasks();
@@ -125,7 +102,32 @@ export default class MyPlugin extends Plugin {
                     new Notice('Tasks already migrated today.');
                 }
             }
-            //=======================================================
+
+            // ================= HEALTH TRACKER ================================
+
+            // Creating "Health Tracker" Folder 
+            if (!this.app.vault.getAbstractFileByPath(`${folderPath}/${folderHealthTrackerPath}`)) {
+                console.log(`Creating inside directory 'Health Tracker': ${folderHealthTrackerPath}`);
+                await this.app.vault.createFolder(`${folderPath}/${folderHealthTrackerPath}`);
+                new Notice('Inside directory "Health Tracker" created!');
+            }
+            // Create "Health Tracker.md" file
+            let fileHealthTracker = this.app.vault.getAbstractFileByPath(filePathHealth);
+            if (!fileHealthTracker) {
+                console.log('Creating file:', filePathHealth);
+                fileHealthTracker = await this.app.vault.create(filePathHealth, "# Health Tracker\n\nOverview of health tracking activities.");
+                new Notice('File "Health Tracker.md" created!');
+            }
+
+            if (fileHealthTracker instanceof TFile) {
+                await this.healthTrackerManager.createWeeklyFile();
+                const summary =  await this.healthTrackerManager.getThisWeekSummary();
+                new Notice (`${summary}`);
+                console.log("Creating HT Calendar TEST!!!")
+
+
+            }
+            // =================================================
 
             // Checking and Creation Job Application file
             let fileJobApplication = this.app.vault.getAbstractFileByPath(filePathJobApplication);
