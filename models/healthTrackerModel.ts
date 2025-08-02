@@ -201,8 +201,18 @@ export class HealthTrackerManager {
         content += "| ------------------ |" + " --- |".repeat(7) + "\n";
         content += "| Daily Habits Track | " + dates.map(d => `${d.day} ${d.month}`).join(" | ") + " |\n";
 
+        // id Generator
+        function generateId(): string {
+            const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let result = '';
+            for (let i = 0; i < 5; i++) {
+                result += chars.charAt(Math.floor(Math.random() * chars.length));
+            }
+            return result;
+        }
+
         for (const group of muscleGroups) {
-            content += `| ${group.padEnd(18)} | ` + daysOfWeek.map(() => `- [ ]`).join(" | ") + " |\n";
+            content += `| ${group.padEnd(18)} | ` + daysOfWeek.map(() => `<input type="checkbox" unchecked id="${generateId()}">`).join(" | ") + " |\n";
         }
 
         try {
