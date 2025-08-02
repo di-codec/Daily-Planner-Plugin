@@ -27,7 +27,7 @@ export default class MyPlugin extends Plugin {
         callback: async () => {
             await this.selfDevManager.createDailyFile();
             const tasks = await this.selfDevManager.getTodayTasks();
-            new Notice(`Сегодняшние задачи: ${tasks.length > 0 ? tasks.join(', ') : 'нет задач'}`);
+            new Notice(`Today tasks: ${tasks.length > 0 ? tasks.join(', ') : 'no tasks'}`);
         }
         });
 
@@ -52,9 +52,8 @@ export default class MyPlugin extends Plugin {
             const folderPath = "Daily Planner";
             const folderSelfDevPath = "Self Development";
             const folderHealthTrackerPath = "Health Tracker";
-            const filePathSelfDev = `${folderPath}/${folderSelfDevPath}/Notes.md`;
+            const filePathSelfDev = `${folderPath}/${folderSelfDevPath}`;
             const filePathJobApplication = `${folderPath}/Job Application Tracker.md`;
-            // const filePathHealth = `${folderPath}/${folderHealthTrackerPath}/Health Tracker.md`;
             const folderPathHealth = `${folderPath}/${folderHealthTrackerPath}`;
 
             // Folder checking and creation
@@ -78,17 +77,17 @@ export default class MyPlugin extends Plugin {
             // Checking and Creation "Notes.md" file
             let fileSelfDev = this.app.vault.getAbstractFileByPath(filePathSelfDev);
             if (!fileSelfDev) {
-                console.log('Creating file:', filePathSelfDev);
-                fileSelfDev = await this.app.vault.create(filePathSelfDev, "`Explanetion of what this section is for`");
-                new Notice('File "Notes.md" created!');
+                console.log('✅ Creating file:', filePathSelfDev);
+                fileSelfDev = await this.app.vault.createFolder(filePathSelfDev);
+                new Notice('✅ Direction "Self Development" created!');
             }
 
-            if (fileSelfDev instanceof TFile) {
+            if (fileSelfDev instanceof TFolder) {
                 await this.selfDevManager.createDailyFile(); // Creating the section for today
                 const tasks = await this.selfDevManager.getTodayTasks();
                 new Notice(`Today's tasks: ${tasks.length > 0 ? tasks.join(', ') : 'no tasks found'}`);
 
-                // Проверяем, перенесены ли задачи сегодня
+                // Checking if tasks have been transferred today 
                 const todayFilePath = this.selfDevManager.getFilePathByDate(new Date());
                 const todayFile = this.app.vault.getAbstractFileByPath(todayFilePath) as TFile;
                 let content = await this.app.vault.read(todayFile);
@@ -113,30 +112,20 @@ export default class MyPlugin extends Plugin {
             // Create "Health Tracker" folder
             let filePathHealthTracker = this.app.vault.getAbstractFileByPath(folderPathHealth);
             if (!filePathHealthTracker) {
-                console.log('Creating folder:', folderPathHealth);
+                console.log('✅ Creating folder:', folderPathHealth);
                 filePathHealthTracker = await this.app.vault.createFolder(folderPathHealth);
-                new Notice('Direction "Health Tracker" created!');
-                filePathHealthTracker = this.app.vault.getAbstractFileByPath(folderPathHealth)
+                new Notice('✅ Direction "Health Tracker" created!');
             }
 
             if (filePathHealthTracker instanceof TFolder) {
-                console.log('TEST')
                 await this.healthTrackerManager.createWeeklyFile();
                 const summary =  await this.healthTrackerManager.getThisWeekSummary();
                 new Notice (`${summary}`);
-                console.log("Creating HT Calendar TEST!!!")
 
 
             }
             // =================================================
-
-            // // Checking and Creation Job Application file
-            // let fileJobApplication = this.app.vault.getAbstractFileByPath(filePathJobApplication);
-            // if (!fileJobApplication) {
-            //     console.log('Creating file:', filePathJobApplication);
-            //     fileJobApplication = await this.app.vault.create(filePathJobApplication, "");
-            //     new Notice('File "Job Application Tracker.md" created!');
-            // }            
+       
         });
 
         // SummaryManager Initialization
