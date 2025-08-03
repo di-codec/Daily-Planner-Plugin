@@ -52,7 +52,6 @@ export default class MyPlugin extends Plugin {
             const folderSelfDevPath = "Self Development";
             const folderHealthTrackerPath = "Health Tracker";
             const filePathSelfDev = `${folderPath}/${folderSelfDevPath}`;
-            const filePathJobApplication = `${folderPath}/Job Application Tracker.md`;
             const folderPathHealth = `${folderPath}/${folderHealthTrackerPath}`;
 
             // Folder checking and creation
@@ -108,6 +107,7 @@ export default class MyPlugin extends Plugin {
                 await this.app.vault.createFolder(`${folderPath}/${folderHealthTrackerPath}`);
                 new Notice('Inside directory "Health Tracker" created!');
             }
+
             // Create "Health Tracker" folder
             let filePathHealthTracker = this.app.vault.getAbstractFileByPath(folderPathHealth);
             if (!filePathHealthTracker) {
@@ -120,13 +120,11 @@ export default class MyPlugin extends Plugin {
                 await this.healthTrackerManager.createWeeklyFile();
                 const summary =  await this.healthTrackerManager.getThisWeekSummary();
                 new Notice (`${summary}`);
-
-
             }
-            // =================================================
+
+            // ==================== SUMMARY =============================
        
         });
-
         // SummaryManager Initialization
         // const summaryManager = new SummaryManager(this.app);
         // await summaryManager.generateSummary();
