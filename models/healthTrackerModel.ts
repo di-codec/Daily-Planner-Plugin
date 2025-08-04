@@ -1,4 +1,6 @@
 import { App, Notice, TFile, TFolder } from "obsidian";
+import { ensureFoldersExist } from "../utils/utils";
+
 
 export class HealthTrackerManager {
     private app: App;
@@ -70,6 +72,7 @@ export class HealthTrackerManager {
     async createWeeklyFile(): Promise<void> {
         const today = new Date();
         const filePath = this.getFilePathByDate(today);
+        await ensureFoldersExist(this.app, filePath);
         let file = this.app.vault.getAbstractFileByPath(filePath) as TFile | null;
 
         if (file) {
