@@ -47,7 +47,7 @@ export class SelfDevManager {
         let file = this.app.vault.getAbstractFileByPath(filePath) as TFile | null;
 
         if (!file) {
-            file = await this.app.vault.create(filePath, `# Self Development - ${new Date().toLocaleDateString("en-GB")}\n`);
+            file = await this.app.vault.create(filePath, `# Self Development - ${new Date().toLocaleDateString("en-GB")}\n\n`);
             new Notice(`Fail "${file.name}" created!`);
         } else {
             new Notice(`Fail "${file.name}" already exists!`);

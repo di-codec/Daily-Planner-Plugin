@@ -19,19 +19,26 @@ export class SummaryManager {
         const healthContent = await this.readFile(this.healthPath);
         const jobContent = await this.readFile(this.jobPath);
 
+        // %% Здесь можно вставить mermaid-heatmap или gantt, если поддерживается \n xychart-beta
         // Генерируем markdown
         const summary = `# Health Tracker
 
 ## Habit tracker calendar
 \`\`\`mermaid
-%% Здесь можно вставить mermaid-heatmap или gantt, если поддерживается
-gantt
-    dateFormat  YYYY-MM-DD
-    axisFormat  %b
-    section Exercise
-    Tue  :done, 2024-01-02, 1d
-    Thu  :done, 2024-01-04, 1d
-    Sat  :done, 2024-01-06, 1d
+---
+config:
+    xyChart:
+        showDataLabel: true
+    themeVariables:
+        xyChart:
+            titleColor: "#ff0000"
+---
+xychart-beta
+    title "Gym Sessions"
+    x-axis [Mo, Tu, We, Th, Fr, Sa, Su]
+    y-axis "Habbit" 4000 --> 11000
+    bar [5000, 6000, 7500, 8200, 9500, 10500, 11000]
+    line [5000, 6000, 7500, 8200, 9500, 10500, 11000]
 \`\`\`
 
 # Self Development

@@ -2,7 +2,7 @@
 import { Notice, Plugin, addIcon, TAbstractFile, TFolder, TFile, WorkspaceLeaf, ItemView } from 'obsidian';
 import { SelfDevManager } from './models/selfDevModel';
 import { HealthTrackerManager } from "./models/healthTrackerModel";
-// import { SummaryManager } from "./models/summaryManager";
+import { SummaryManager } from "./models/summaryManager";
 
 
 export default class MyPlugin extends Plugin {
@@ -72,7 +72,7 @@ export default class MyPlugin extends Plugin {
                 new Notice('Inside directory "Self Development" created!');
             }
 
-            // Checking and Creation "Notes.md" file
+            // Checking and Creation "Self Development" folder
             let fileSelfDev = this.app.vault.getAbstractFileByPath(filePathSelfDev);
             if (!fileSelfDev) {
                 console.log('✅ Creating file:', filePathSelfDev);
@@ -92,7 +92,7 @@ export default class MyPlugin extends Plugin {
                 const today = new Date().toLocaleDateString("en-GB");
                 if (!content.includes(`# Migrated: ${today}`)) {
                     await this.selfDevManager.migrateUnfinishedTasks();
-                    await this.app.vault.append(todayFile, `# Migrated: ${today}\n`);
+                    await this.app.vault.append(todayFile, `------------------------------------ \nMigrated: ${today}\n`);
                     new Notice(`Transferred unfinished tasks for today!`);
                 } else {
                     new Notice('Tasks already migrated today.');
@@ -108,7 +108,7 @@ export default class MyPlugin extends Plugin {
                 new Notice('Inside directory "Health Tracker" created!');
             }
 
-            // Create "Health Tracker" folder
+            // Checking and Create "Health Tracker" folder
             let filePathHealthTracker = this.app.vault.getAbstractFileByPath(folderPathHealth);
             if (!filePathHealthTracker) {
                 console.log('✅ Creating folder:', folderPathHealth);
@@ -121,13 +121,14 @@ export default class MyPlugin extends Plugin {
                 const summary =  await this.healthTrackerManager.getThisWeekSummary();
                 new Notice (`${summary}`);
             }
-
-            // ==================== SUMMARY =============================
-       
         });
+
+       
+        //================== SUMMARY =========================
+
         // SummaryManager Initialization
-        // const summaryManager = new SummaryManager(this.app);
-        // await summaryManager.generateSummary();
+        const summaryManager = new SummaryManager(this.app);
+        await summaryManager.generateSummary();
     }
 
     async onunload() {
