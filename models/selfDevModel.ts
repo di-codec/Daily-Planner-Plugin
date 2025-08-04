@@ -1,4 +1,6 @@
 import { App, Notice, TFile } from "obsidian";
+import { ensureFoldersExist } from "../utils/utils";
+
 
 export class SelfDevManager {
     private app: App;
@@ -12,20 +14,36 @@ export class SelfDevManager {
         this.settings = settings;
     }
 
+    // GET the folder name by year
+    private getFileNameByYear (date: Date): string {
+        const yearDate = date.toLocaleDateString("en-GB", {year: "numeric"})
+        return `${yearDate} Year`
+    }
+
+    // Get the folder name by month
+    private getFileNameByMonth(date: Date): string {
+        const monthData = date.toLocaleDateString("en-GB", { month: "long" });
+        return `📅 ${monthData}`;
+    }
+
     // Getting the file name by date
     private getFileNameByDate(date: Date): string {
-        const dateStr = date.toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" });
+        const dateStr = date.toLocaleDateString("en-GB", { day: "numeric", month: "long"});
         return `📅 ${dateStr}.md`;
     }
 
     // Obtaining the path to the task file by date
+    // public getFilePathByDate(date: Date): string {
+    //     return `${this.settings.mainFileDirectory}/${this.settings.taskFileDirectory}/${this.getFileNameByDate(date)}`;
+    // }
     public getFilePathByDate(date: Date): string {
-        return `${this.settings.mainFileDirectory}/${this.settings.taskFileDirectory}/${this.getFileNameByDate(date)}`;
+        return `${this.settings.mainFileDirectory}/${this.settings.taskFileDirectory}/${this.getFileNameByYear(date)}/${this.getFileNameByMonth(date)}/${this.getFileNameByDate(date)}`;
     }
 
     // Creating a new task file for today if it hasn't been created yet
     async createDailyFile(): Promise<void> {
         const filePath = this.getFilePathByDate(new Date());
+        await ensureFoldersExist(this.app, filePath);
         let file = this.app.vault.getAbstractFileByPath(filePath) as TFile | null;
 
         if (!file) {
