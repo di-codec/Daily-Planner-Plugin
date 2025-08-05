@@ -32,9 +32,6 @@ export class SelfDevManager {
         return `📅 ${dateStr}.md`;
     }
 
-    // Obtaining the path to the task file by date
-    // public getFilePathByDate(date: Date): string {
-    //     return `${this.settings.mainFileDirectory}/${this.settings.taskFileDirectory}/${this.getFileNameByDate(date)}`;
     // }
     public getFilePathByDate(date: Date): string {
         return `${this.settings.mainFileDirectory}/${this.settings.taskFileDirectory}/${this.getFileNameByYear(date)}/${this.getFileNameByMonth(date)}/${this.getFileNameByDate(date)}`;
