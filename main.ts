@@ -8,11 +8,15 @@ import { SummaryManager } from "./models/summaryManager";
 export default class MyPlugin extends Plugin {
     private selfDevManager: SelfDevManager;
     private healthTrackerManager: HealthTrackerManager;
+    private summaryManager: SummaryManager;
 
     async onload() {
         console.log('loading plugin');
 
         addIcon('circle', '<circle cx="50" cy="50" r="50" fill="currentColor"/>');
+
+        // Initialize SummaryManager
+        this.summaryManager = new SummaryManager(this.app);
 
         this.selfDevManager = new SelfDevManager(this.app, {
             mainFileDirectory: "Daily Planner",
@@ -53,6 +57,8 @@ export default class MyPlugin extends Plugin {
             const folderHealthTrackerPath = "Health Tracker";
             const filePathSelfDev = `${folderPath}/${folderSelfDevPath}`;
             const folderPathHealth = `${folderPath}/${folderHealthTrackerPath}`;
+            // Summary file
+            const summaryFilePath = `${folderPath}/Summary.md`;
 
             // Folder checking and creation
             let folder = this.app.vault.getAbstractFileByPath(folderPath);
@@ -86,24 +92,47 @@ export default class MyPlugin extends Plugin {
                 new Notice(`Today's tasks: ${tasks.length > 0 ? tasks.join(', ') : 'no tasks found'}`);
 
                 // Checking if tasks have been transferred today 
+                //-----
+                const today = new Date().toLocaleDateString("en-GB");
+                //-----
                 const todayFilePath = this.selfDevManager.getFilePathByDate(new Date());
                 const todayFile = this.app.vault.getAbstractFileByPath(todayFilePath) as TFile;
-                let content = await this.app.vault.read(todayFile);
-                const today = new Date().toLocaleDateString("en-GB");
-                if (!content.includes(`# Migrated: ${today}`)) {
-                    await this.selfDevManager.migrateUnfinishedTasks();
-                    await this.app.vault.append(todayFile, `------------------------------------ \nMigrated: ${today}\n`);
-                    new Notice(`Transferred unfinished tasks for today!`);
-                } else {
-                    new Notice('Tasks already migrated today.');
+                // let content = await this.app.vault.read(todayFile);
+                //-----
+                if (todayFile) {
+                    let content = await this.app.vault.read(todayFile);
+                    const migrationMarker = `Migrated: ${today}\n`;
+                    if (!content.includes(migrationMarker)){
+                        try{
+                            await this.selfDevManager.migrateUnfinishedTasks();
+                            await this.app.vault.append(todayFile,`-----------------\n${migrationMarker}`);
+                            new Notice (`Transferred unfinished taasks for today!`);
+                        } catch (error) {
+                            new Notice (`Error mimgrating tasks: ${error.message}`);
+                        }
+                    } else{
+                        new Notice (`Today's file not found or path is incorrect.`);
+                    }
                 }
+                //-----
+
+
+
+                // const today = new Date().toLocaleDateString("en-GB");
+                // if (!content.includes(`Migrated: ${today}\n`)) {
+                //     await this.selfDevManager.migrateUnfinishedTasks();
+                //     await this.app.vault.append(todayFile, `------------------------------------ \nMigrated: ${today}\n`);
+                //     new Notice(`Transferred unfinished tasks for today!`);
+                // } else {
+                //     new Notice('Tasks already migrated today.');
+                // }
             }
 
             // ================= HEALTH TRACKER ================================
 
             // Creating "Health Tracker" Folder 
             if (!this.app.vault.getAbstractFileByPath(`${folderPath}/${folderHealthTrackerPath}`)) {
-                console.log(`Creating inside directory 'Health Tracker': ${folderHealthTrackerPath}`);
+                // console.log(`Creating inside directory 'Health Tracker': ${folderHealthTrackerPath}`);
                 await this.app.vault.createFolder(`${folderPath}/${folderHealthTrackerPath}`);
                 new Notice('Inside directory "Health Tracker" created!');
             }
@@ -111,7 +140,7 @@ export default class MyPlugin extends Plugin {
             // Checking and Create "Health Tracker" folder
             let filePathHealthTracker = this.app.vault.getAbstractFileByPath(folderPathHealth);
             if (!filePathHealthTracker) {
-                console.log('✅ Creating folder:', folderPathHealth);
+                // console.log('✅ Creating folder:', folderPathHealth);
                 filePathHealthTracker = await this.app.vault.createFolder(folderPathHealth);
                 new Notice('✅ Direction "Health Tracker" created!');
             }
@@ -120,6 +149,15 @@ export default class MyPlugin extends Plugin {
                 await this.healthTrackerManager.createWeeklyFile();
                 const summary =  await this.healthTrackerManager.getThisWeekSummary();
                 new Notice (`${summary}`);
+                // Generate summary after creating the tracker
+                await this.summaryManager.generateSummary();
+            }
+
+            // Create or update Summary.md
+            let summaryFile = this.app.vault.getAbstractFileByPath(summaryFilePath) as TFile | null;
+            if (!summaryFile) {
+                await this.app.vault.create(summaryFilePath, "# Summary\n\nInitial summary content.");
+                new Notice('Summary.md created!');
             }
         });
 
