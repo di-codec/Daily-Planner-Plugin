@@ -116,7 +116,7 @@ export class HealthTrackerManager {
         }
 
         for (const group of muscleGroups) {
-            content += `| ${group.padEnd(18)} | ` + daysOfWeek.map(() => `⬜`).join(" | ") + " |\n";
+            content += `| ${group.padEnd(18)} | ` + daysOfWeek.map(() => `<input type="checkbox" unchecked id="${generateId()}">`).join(" | ") + " |\n";
         }
 
         try {
