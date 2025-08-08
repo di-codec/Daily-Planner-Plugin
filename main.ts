@@ -150,7 +150,7 @@ export default class MyPlugin extends Plugin {
                 const summary =  await this.healthTrackerManager.getThisWeekSummary();
                 new Notice (`${summary}`);
                 // Generate summary after creating the tracker
-                await this.summaryManager.generateSummary();
+                await this.summaryManager.generateWeeklySummary();
             }
 
             // Create or update Summary.md
@@ -166,7 +166,7 @@ export default class MyPlugin extends Plugin {
 
         // SummaryManager Initialization
         const summaryManager = new SummaryManager(this.app);
-        await summaryManager.generateSummary();
+        await summaryManager.generateWeeklySummary();
     }
 
     async onunload() {
