@@ -142,7 +142,7 @@ export class SummaryManager {
                         const cell = columns[cellIndex].trim();
                         // Count completed habits (☑️ emoji or HTML checked)
                         if (cell.includes('☑️') || cell.includes('unchecked')) {
-                            habitData[muscleGroup][dayIndex]= 0;
+                            habitData[muscleGroup][dayIndex] = 0;
                         } else {
                             habitData[muscleGroup][dayIndex]++;
                         }
@@ -211,7 +211,7 @@ export class SummaryManager {
                 }
             }
         };
-
+        console.log(`${JSON.stringify(chartConfig.data.datasets[0].data, null, 2)}`); // TODO: remove this
         return `
 <div style="width: 100%; height: 500px; position: relative;">
     <canvas id="habitChart"></canvas>
