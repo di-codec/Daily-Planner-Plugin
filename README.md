@@ -137,7 +137,6 @@ manifest.json        // Plugin manifest
 
 ## To-do list:
 
-- `обновление дат работает` ✅
 - [x] откомментировать selfDevModel.ts
 - [x] обновить selfDevModel:
   - [x] удалить файл `"Self Development Records.md"` 
