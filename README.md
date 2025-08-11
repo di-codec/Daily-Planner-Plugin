@@ -145,7 +145,7 @@ manifest.json        // Plugin manifest
 - [x] need to add explanation for Node.md file
 - [x] solve in self development the tasks duplication
 - [x] задокументировать идею этого проекта
-- [ ] отредактировать "DOCUMENTATION.md" файл
+- [x] отредактировать "DOCUMENTATION.md" файл
 - [x] Health Tracker:
 	- [x] датированные директории 
 	- [x] датированные документы
