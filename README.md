@@ -121,18 +121,6 @@ Daily Planner
 
 - Editable list of body parts and exercises.
 
-# 📁 Project Structure
-
-```kotlin
-src/
-├── main.ts          // Plugin core logic
-├── ui/              // UI components
-├── data/            // Markdown file handling
-├── charts/          // Chart rendering
-├── styles/          // Plugin styling
-├── utils/           // Utility functions
-manifest.json        // Plugin manifest
-```
 
 
 ## To-do list:
