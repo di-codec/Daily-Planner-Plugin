@@ -1,4 +1,6 @@
 import { App, TFile, TFolder, Vault, normalizePath } from "obsidian";
+import { ensureFoldersExist } from "../utils/utils";
+
 
 const WEEKDAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
 const MUSCLE_GROUPS = ["Glutes", "Legs", "Back", "Brists", "Shoulders", "Jogging", "Yoga"];
@@ -27,6 +29,9 @@ export class SummaryManager {
         try {
             const habitData = await this.aggregateAllTrackerData();
             const chartHtml = this.generateChartJsChart(habitData);
+            
+            // Ensure parent folders exist before writing the file
+            await ensureFoldersExist(this.app, summaryPath);
             
             const summaryContent = `# Health Tracker Summary\n\n${chartHtml}\n`;
             await this.app.vault.adapter.write(normalizePath(summaryPath), summaryContent);
@@ -95,6 +100,9 @@ export class SummaryManager {
         const habitData = this.parseMarkdownTable(content);
         const chartHtml = this.generateChartJsChart(habitData);
 
+        // Ensure parent folders exist before writing the file
+        await ensureFoldersExist(this.app, summaryPath);
+
         const summaryContent = `# Health Tracker Summary\n\n${chartHtml}\n`;
         await this.app.vault.adapter.write(normalizePath(summaryPath), summaryContent);
     }
@@ -136,7 +144,7 @@ export class SummaryManager {
                 if (!MUSCLE_GROUPS.includes(muscleGroup)) continue;
                 
                 // Check days columns (indices 2-8 for Mo-Su)
-                for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
+                for (let dayIndex = 0; dayIndex < 10; dayIndex++) {
                     const cellIndex = dayIndex + 2; // Skip empty first column and habit name column
                     if (cellIndex < columns.length) {
                         const cell = columns[cellIndex].trim();
@@ -211,7 +219,13 @@ export class SummaryManager {
                 }
             }
         };
-        console.log(`${JSON.stringify(chartConfig.data.datasets[0].data, null, 2)}`); // TODO: remove this
+        // console.log(`Gluetes${JSON.stringify(chartConfig.data.datasets[0].data, null, 2)}`); // TODO: remove this
+        // console.log(`Legs${JSON.stringify(chartConfig.data.datasets[1].data, null, 2)}`); // TODO: remove this
+        // console.log(`Back${JSON.stringify(chartConfig.data.datasets[2].data, null, 2)}`); // TODO: remove this
+        // console.log(`Brists${JSON.stringify(chartConfig.data.datasets[3].data, null, 2)}`); // TODO: remove this
+        // console.log(`Shoulders${JSON.stringify(chartConfig.data.datasets[4].data, null, 2)}`); // TODO: remove this
+        // console.log(`Jogging${JSON.stringify(chartConfig.data.datasets[5].data, null, 2)}`); // TODO: remove this
+        // console.log(`Yoga${JSON.stringify(chartConfig.data.datasets[6].data, null, 2)}`); // TODO: remove this
         return `
 <div style="width: 100%; height: 500px; position: relative;">
     <canvas id="habitChart"></canvas>
