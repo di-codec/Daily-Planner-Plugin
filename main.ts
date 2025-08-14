@@ -11,12 +11,14 @@ export default class MyPlugin extends Plugin {
     private summaryManager: SummaryManager;
 
     async onload() {
-        console.log('loading plugin');
+
+        // console.log('loading plugin');
 
         addIcon('circle', '<circle cx="50" cy="50" r="50" fill="currentColor"/>');
 
         // Initialize SummaryManager
         this.summaryManager = new SummaryManager(this.app);
+
 
         this.selfDevManager = new SelfDevManager(this.app, {
             mainFileDirectory: "Daily Planner",
@@ -48,8 +50,8 @@ export default class MyPlugin extends Plugin {
                 const tasks = await this.healthTrackerManager.getThisWeekSummary();
                 new Notice(`Health Tracker created: ${tasks.length > 0 ? tasks.join(', ') : 'No content'}`);
             }
-        });        
-        
+        });
+
         // Structure and tasks manager creation through 2ribbon icon"
         this.addRibbonIcon('circle', 'Manager', async () => {
             const folderPath = "Daily Planner";
@@ -160,7 +162,6 @@ export default class MyPlugin extends Plugin {
                 new Notice('Summary.md created!');
             }
         });
-
        
         //================== SUMMARY =========================
 
