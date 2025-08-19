@@ -66,9 +66,9 @@ xychart-beta
     title "Weekly Health Habits Summary"
     x-axis [Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday]
     y-axis "Number of Exercises" 0 --> 5
-    bar [1, 0, 1, 0, 1, 1, 0] ::Glutes(#FF69B4)
-    bar [1, 1, 0, 1, 1, 1, 1] ::Legs(#4169E1)
-    bar [0, 1, 1, 1, 1, 0, 1] ::Back(#FFD700)
+    bar [1, 0, 1, 0, 1, 1, 0] 
+    bar [1, 1, 0, 1, 1, 1, 1] 
+    bar [0, 1, 1, 1, 1, 0, 1] 
 ```
 
 ### Сводная таблица
