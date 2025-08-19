@@ -106,7 +106,7 @@ Level 1: ████ ████ ████ ████ ████ ██
 ## 📁 Парсинг файлов
 
 ### Формат файла Health Tracker
-```markdown
+==========================
 # Health Tracker - 24 July 2025
 
 | Weekdays           | Mo | Tu | We | Th | Fr | Sa | Su |
@@ -114,7 +114,7 @@ Level 1: ████ ████ ████ ████ ████ ██
 | Daily Habits Track | 24 | 25 | 26 | 27 | 28 | 29 | 30 |
 | Glutes            | <input type="checkbox" checked> | <input type="checkbox"> | ... |
 | Legs              | <input type="checkbox"> | <input type="checkbox" checked> | ... |
-```
+==========================
 
 ### Логика парсинга
 1. **Поиск таблицы**: Ищет строку с "Weekdays"
