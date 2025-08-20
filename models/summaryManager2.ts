@@ -1,8 +1,9 @@
-import { App, TFile, TFolder, Vault, normalizePath } from "obsidian";
+import { App, TFile, normalizePath } from "obsidian";
 import { ensureFoldersExist } from "../utils/utils";
 
 
-const WEEKDAYS = ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"];
+
+const WEEKDAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
 const MUSCLE_GROUPS = ["Glutes", "Legs", "Back", "Brists", "Shoulders", "Jogging", "Yoga"];
 const MUSCLE_COLORS = {
     "Glutes": "#FF69B4",    // Pink
@@ -22,134 +23,89 @@ export class SummaryManager {
     }
 
     /**
-     * Generate summary from all tracker files in Health Tracker directories
-     * @param summaryPath Path where to save the summary file
+     * Main method for generating the summary
      */
-    async generateWeeklySummary(summaryPath: string = "Daily Planner/Summary.md"): Promise<void> {
+    async generateWeeklySummary(date: Date, summaryPath: string = "Daily Planner/Summary.md"): Promise<void> {
         try {
-            const habitData = await this.aggregateAllTrackerData();
-            const chartHtml = this.generateChartJsChart(habitData);
-            
-            // Ensure parent folders exist before writing the file
+            const habitData = await this.readWeekFile(date);
+            const chartYaml = this.generateChartYaml(habitData);
+
             await ensureFoldersExist(this.app, summaryPath);
-            
-            const summaryContent = `# Health Tracker Summary\n\n${chartHtml}\n`;
+
+            const summaryContent = `# 🏋️ Health Tracker Summary\n\n${chartYaml}\n`;
             await this.app.vault.adapter.write(normalizePath(summaryPath), summaryContent);
             console.log(`Summary generated at: ${summaryPath}`);
         } catch (error) {
-            console.error('Error generating summary:', error);
+            console.error("Error generating summary:", error);
         }
     }
 
     /**
-     * Scan all Health Tracker directories and aggregate habit data by muscle group
+     * Read data from a specific week file
      */
-    private async aggregateAllTrackerData(): Promise<{ [muscleGroup: string]: number[] }> {
-        // Initialize data structure: each muscle group has an array of 7 days
+    private async readWeekFile(date: Date): Promise<{ [muscleGroup: string]: number[] }> {
+        // Initialize the structure
         const habitData: { [muscleGroup: string]: number[] } = {};
         MUSCLE_GROUPS.forEach(group => {
             habitData[group] = new Array(7).fill(0);
         });
 
-        const healthTrackerPath = "Daily Planner/Health Tracker";
-        
-        const healthTrackerFolder = this.app.vault.getAbstractFileByPath(healthTrackerPath);
-        if (!(healthTrackerFolder instanceof TFolder)) {
-            console.warn(`Health Tracker folder not found at: ${healthTrackerPath}`);
+        const monthName = this.getFileNameByMonth(date);
+        const weekName = this.getFileNameByWeek(date);
+
+        const filePath = `Daily Planner/Health Tracker/${monthName}/${weekName}`;
+        const file = this.app.vault.getAbstractFileByPath(filePath);
+
+        if (!(file instanceof TFile)) {
+            console.warn(`Week file not found: ${filePath}`);
             return habitData;
         }
 
-        // Iterate through all month folders
-        for (const monthFolder of healthTrackerFolder.children) {
-            if (monthFolder instanceof TFolder) {
-                // Process each week file in the month folder
-                for (const weekFile of monthFolder.children) {
-                    if (weekFile instanceof TFile && weekFile.extension === 'md') {
-                        try {
-                            const content = await this.app.vault.read(weekFile);
-                            const weekHabitData = this.parseMarkdownTable(content);
-                            
-                            // Add to total counts for each muscle group
-                            for (const muscleGroup of MUSCLE_GROUPS) {
-                                for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
-                                    habitData[muscleGroup][dayIndex] += weekHabitData[muscleGroup]?.[dayIndex] || 0;
-                                }
-                            }
-                        } catch (error) {
-                            console.error(`Error reading file ${weekFile.path}:`, error);
-                        }
-                    }
+        try {
+            const content = await this.app.vault.read(file);
+            const weekHabitData = this.parseMarkdownTable(content);
+
+            // Copying data
+            for (const muscleGroup of MUSCLE_GROUPS) {
+                for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
+                    habitData[muscleGroup][dayIndex] = weekHabitData[muscleGroup]?.[dayIndex] || 0;
                 }
             }
+        } catch (e) {
+            console.error(`Error reading week file: ${filePath}`, e);
         }
 
         return habitData;
     }
 
     /**
-     * Generate summary from a single tracker file (legacy method, kept for compatibility)
-     */
-    async generateSummary(trackerFilePath: string, summaryPath: string = "Daily Planner/Summary.md"): Promise<void> {
-        const file = this.app.vault.getAbstractFileByPath(trackerFilePath);
-        if (!(file instanceof TFile)) {
-            console.warn(`Health Tracker file not found at path: ${trackerFilePath}`);
-            return;
-        }
-
-        const content = await this.app.vault.read(file);
-        const habitData = this.parseMarkdownTable(content);
-        const chartHtml = this.generateChartJsChart(habitData);
-
-        // Ensure parent folders exist before writing the file
-        await ensureFoldersExist(this.app, summaryPath);
-
-        const summaryContent = `# Health Tracker Summary\n\n${chartHtml}\n`;
-        await this.app.vault.adapter.write(normalizePath(summaryPath), summaryContent);
-    }
-
-    /**
-     * Parse markdown table and count completed habits (☑️) for each muscle group and day
+     * Parsing a markdown table
      */
     private parseMarkdownTable(content: string): { [muscleGroup: string]: number[] } {
         const lines = content.split("\n");
         const habitData: { [muscleGroup: string]: number[] } = {};
-        
-        // Initialize data structure
-        MUSCLE_GROUPS.forEach(group => {
-            habitData[group] = new Array(7).fill(0);
-        });
-        
-        // Find table rows containing habit data
+        MUSCLE_GROUPS.forEach(group => (habitData[group] = new Array(7).fill(0)));
+
         let inTable = false;
         for (const line of lines) {
-            // Skip empty lines and headers
-            if (!line.trim() || line.includes('Weekdays') || line.includes('---') || line.includes('Daily Habits Track')) {
-                if (line.includes('Weekdays')) {
-                    inTable = true;
-                }
+            if (!line.trim() || line.includes("Weekdays") || line.includes("---") || line.includes("Daily Habits Track")) {
+                if (line.includes("Weekdays")) inTable = true;
                 continue;
             }
-            
-            // Process habit rows
-            if (inTable && line.includes('|')) {
-                const columns = line.split('|');
-                
-                // Skip if not enough columns (should have at least 9: empty + habit name + 7 days)
+
+            if (inTable && line.includes("|")) {
+                const columns = line.split("|");
                 if (columns.length < 9) continue;
-                
-                // Extract muscle group name (second column)
+
                 const muscleGroup = columns[1].trim();
-                
-                // Only process known muscle groups
                 if (!MUSCLE_GROUPS.includes(muscleGroup)) continue;
-                
-                // Check days columns (indices 2-8 for Mo-Su)
-                for (let dayIndex = 0; dayIndex < 8; dayIndex++) {
-                    const cellIndex = dayIndex + 2; // Skip empty first column and habit name column
+
+                for (let dayIndex = 0; dayIndex < 7; dayIndex++) {
+                    const cellIndex = dayIndex + 2;
                     if (cellIndex < columns.length) {
                         const cell = columns[cellIndex].trim();
-                        // Count completed habits (☑️ emoji or HTML checked)
-                        if (cell.includes('☑️') || cell.includes('unchecked')) {
+                        // твоя логика проверки ☑️ оставлена как есть
+                        if (cell.includes("☑️") || cell.includes("unchecked")) {
                             habitData[muscleGroup][dayIndex] = 0;
                         } else {
                             habitData[muscleGroup][dayIndex]++;
@@ -158,84 +114,67 @@ export class SummaryManager {
                 }
             }
         }
-
+        console.log(`YOGA${JSON.stringify(habitData.data, null, 2)}`);
         return habitData;
     }
 
     /**
-     * Generate Chart.js stacked bar chart showing completed habits per muscle group per day
+     * Assembly of YAML data for the habit-chart block
      */
-    private generateChartJsChart(habitData: { [muscleGroup: string]: number[] }): string {
+    private generateChartYaml(habitData: { [muscleGroup: string]: number[] }): string {
         const datasets = MUSCLE_GROUPS.map(muscleGroup => ({
             label: muscleGroup,
             data: habitData[muscleGroup] || new Array(7).fill(0),
-            backgroundColor: MUSCLE_COLORS[muscleGroup as keyof typeof MUSCLE_COLORS],
-            borderColor: MUSCLE_COLORS[muscleGroup as keyof typeof MUSCLE_COLORS],
-            borderWidth: 1
+            backgroundColor: MUSCLE_COLORS[muscleGroup as keyof typeof MUSCLE_COLORS]
         }));
 
-        const chartConfig = {
-            type: 'bar',
-            data: {
-                labels: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
-                datasets: datasets
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: {
-                    title: {
-                        display: true,
-                        text: 'Completed Habits Per Day',
-                        font: {
-                            size: 16,
-                            weight: 'bold'
-                        }
-                    },
-                    legend: {
-                        display: true,
-                        position: 'bottom'
-                    }
-                },
-                scales: {
-                    x: {
-                        stacked: true,
-                        title: {
-                            display: true,
-                            text: 'Days of Week'
-                        }
-                    },
-                    y: {
-                        stacked: true,
-                        title: {
-                            display: true,
-                            text: 'Number of Exercises'
-                        },
-                        beginAtZero: true,
-                        ticks: {
-                            stepSize: 1
-                        }
-                    }
-                }
-            }
-        };
-        // console.log(`Gluetes${JSON.stringify(chartConfig.data.datasets[0].data, null, 2)}`); // TODO: remove this
-        // console.log(`Legs${JSON.stringify(chartConfig.data.datasets[1].data, null, 2)}`); // TODO: remove this
-        // console.log(`Back${JSON.stringify(chartConfig.data.datasets[2].data, null, 2)}`); // TODO: remove this
-        // console.log(`Brists${JSON.stringify(chartConfig.data.datasets[3].data, null, 2)}`); // TODO: remove this
-        // console.log(`Shoulders${JSON.stringify(chartConfig.data.datasets[4].data, null, 2)}`); // TODO: remove this
-        // console.log(`Jogging${JSON.stringify(chartConfig.data.datasets[5].data, null, 2)}`); // TODO: remove this
-        console.log(`Yoga${JSON.stringify(chartConfig.data.datasets[6].data, null, 2)}`); // TODO: remove this
-        return `
-<div style="width: 100%; height: 500px; position: relative;">
-    <canvas id="habitChart"></canvas>
-</div>
+        const yamlLines: string[] = [];
+        yamlLines.push("labels:");
+        WEEKDAYS.forEach(day => yamlLines.push(`  - ${day}`));
+        yamlLines.push("datasets:");
+        datasets.forEach(ds => {
+            yamlLines.push(`  - label: ${ds.label}`);
+            yamlLines.push(`    data: [${ds.data.join(", ")}]`);
+            yamlLines.push(`    backgroundColor: "${ds.backgroundColor}"`);
+        });
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-    const ctx = document.getElementById('habitChart').getContext('2d');
-    new Chart(ctx, ${JSON.stringify(chartConfig, null, 2)});
-</script>
+        return `
+\`\`\`habit-chart
+${yamlLines.join("\n")}
+\`\`\`
         `.trim();
+    }
+
+    /**
+     * Helper methods: month name and week name
+     */
+    private getFileNameByMonth(date: Date): string {
+        const monthData = date.toLocaleDateString("en-GB", { month: "long" });
+        return `📅 ${monthData}`;
+    }
+
+    private getFileNameByWeek(date: Date): string {
+        const startOfWeek = this.getStartOfWeek(date);
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 6);
+
+        const startDate = startOfWeek.getDate();
+        const endDate = endOfWeek.getDate();
+        const startMonth = startOfWeek.toLocaleDateString("en-GB", { month: "short" });
+        const endMonth = endOfWeek.toLocaleDateString("en-GB", { month: "short" });
+
+        // Include month if week spans two months
+        return startMonth === endMonth
+            ? `${startDate} - ${endDate}.md`
+            : `${startDate} ${startMonth} - ${endDate} ${endMonth}.md`;
+    }
+    // Calculate the start of the week (Monday)
+    private getStartOfWeek(date: Date): Date {
+        const startOfWeek = new Date(date);
+        const day = startOfWeek.getDay(); // Sunday = 0, Monday = 1, ...
+        const offset = day === 0 ? 6 : day - 1; // Adjust for Monday start
+        startOfWeek.setDate(startOfWeek.getDate() - offset);
+        startOfWeek.setHours(0, 0, 0, 0); // Reset time to midnight
+        return startOfWeek;
     }
 }

@@ -12,7 +12,7 @@ export interface HabitChartData {
     }[];
 }
 
-export class HealthChart {
+export class TableChart {
     constructor() {}
 
     /**
@@ -58,7 +58,7 @@ export class HealthChart {
                         y: {
                             stacked: true,
                             beginAtZero: true,
-                            max: 5,
+                            max: 7,
                             title: { display: true, text: "Number of Exercises" }
                         }
                     }

@@ -3,14 +3,14 @@ import { Notice, Plugin, addIcon, TAbstractFile, TFolder, TFile, WorkspaceLeaf, 
 import { SelfDevManager } from './models/selfDevModel';
 import { HealthTrackerManager } from "./models/healthTrackerModel";
 import { SummaryManager } from "./models/summaryManager2";
-import {HealthChart } from './models/tableDev';
+import {TableChart } from './models/tableDev';
 
 
 export default class MyPlugin extends Plugin {
     private selfDevManager: SelfDevManager;
     private healthTrackerManager: HealthTrackerManager;
     private summaryManager: SummaryManager;
-    private chart: HealthChart;
+    private chart: TableChart;
 
     async onload() {
 
@@ -24,7 +24,7 @@ export default class MyPlugin extends Plugin {
 
         //================== Chart TEST ==========================
         
-        this.chart = new HealthChart()
+        this.chart = new TableChart()
         // регистрируем код-блок
         this.registerMarkdownCodeBlockProcessor("habit-chart", (source, el) => {
             this.chart.renderChart(source, el);
@@ -33,25 +33,25 @@ export default class MyPlugin extends Plugin {
         // команда для авто-создания файла
         this.addCommand({
             id: "create-habit-chart-file",
-            name: "📊 Create Habit Chart File",
-            callback: async () => {
-                const fileName = "Habits Chart.md";
-                const demoContent = this.chart.generateDemoFileContent();
+            name: "📊 Create Chart File",
+            // callback: async () => {
+            //     const fileName = "Habits Chart.md";
+            //     const demoContent = this.chart.generateDemoFileContent();
 
-                let file: TFile | null = this.app.vault.getAbstractFileByPath(fileName) as TFile;
+            //     let file: TFile | null = this.app.vault.getAbstractFileByPath(fileName) as TFile;
 
-                if (!file) {
-                    file = await this.app.vault.create(fileName, demoContent);
-                    new Notice(`File '${fileName}' created with demo chart ✅`);
-                } else {
-                    await this.app.vault.modify(file, demoContent);
-                    new Notice(`File '${fileName}' updated with demo chart ✅`);
-                }
+            //     if (!file) {
+            //         file = await this.app.vault.create(fileName, demoContent);
+            //         new Notice(`File '${fileName}' created with demo chart ✅`);
+            //     } else {
+            //         await this.app.vault.modify(file, demoContent);
+            //         new Notice(`File '${fileName}' updated with demo chart ✅`);
+            //     }
 
-                // открыть файл
-                const leaf = this.app.workspace.getLeaf(true);
-                await leaf.openFile(file);
-            }
+            //     // открыть файл
+            //     const leaf = this.app.workspace.getLeaf(true);
+            //     await leaf.openFile(file);
+            // }
         });
         //============================================
 
@@ -152,18 +152,6 @@ export default class MyPlugin extends Plugin {
                         new Notice (`Today's file not found or path is incorrect.`);
                     }
                 }
-                //-----
-
-
-
-                // const today = new Date().toLocaleDateString("en-GB");
-                // if (!content.includes(`Migrated: ${today}\n`)) {
-                //     await this.selfDevManager.migrateUnfinishedTasks();
-                //     await this.app.vault.append(todayFile, `------------------------------------ \nMigrated: ${today}\n`);
-                //     new Notice(`Transferred unfinished tasks for today!`);
-                // } else {
-                //     new Notice('Tasks already migrated today.');
-                // }
             }
 
             // ================= HEALTH TRACKER ================================
@@ -188,7 +176,7 @@ export default class MyPlugin extends Plugin {
                 const summary =  await this.healthTrackerManager.getThisWeekSummary();
                 new Notice (`${summary}`);
                 // Generate summary after creating the tracker
-                await this.summaryManager.generateWeeklySummary();
+                await this.summaryManager.generateWeeklySummary(new Date(), "Daily Planner/Summary.md");
             }
 
             // Create or update Summary.md
@@ -203,7 +191,7 @@ export default class MyPlugin extends Plugin {
 
         // SummaryManager Initialization
         const summaryManager = new SummaryManager(this.app);
-        await summaryManager.generateWeeklySummary();
+        await summaryManager.generateWeeklySummary(new Date(), "Daily Planner/Summary.md");
     }
 
     async onunload() {
