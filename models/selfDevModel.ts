@@ -1,5 +1,6 @@
 import { App, Notice, TFile } from "obsidian";
 import { ensureFoldersExist } from "../utils/utils";
+import { PassThrough } from "stream";
 
 
 export class SelfDevManager {
@@ -47,7 +48,7 @@ export class SelfDevManager {
             file = await this.app.vault.create(filePath, `# Self Development - ${new Date().toLocaleDateString("en-GB")}\n\n`);
             new Notice(`Fail "${file.name}" created!`);
         } else {
-            new Notice(`Fail "${file.name}" already exists!`);
+            PassThrough
         }
     }
 

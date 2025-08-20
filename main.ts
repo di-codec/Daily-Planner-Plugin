@@ -4,6 +4,7 @@ import { SelfDevManager } from './models/selfDevModel';
 import { HealthTrackerManager } from "./models/healthTrackerModel";
 import { SummaryManager } from "./models/summaryManager2";
 import {TableChart } from './models/tableDev';
+import { PassThrough } from 'stream';
 
 
 export default class MyPlugin extends Plugin {
@@ -131,7 +132,7 @@ export default class MyPlugin extends Plugin {
                             new Notice (`Error mimgrating tasks: ${error.message}`);
                         }
                     } else{
-                        new Notice (`Today's file not found or path is incorrect.`);
+                        PassThrough
                     }
                 }
             }

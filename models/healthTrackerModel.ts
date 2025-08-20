@@ -76,7 +76,6 @@ export class HealthTrackerManager {
         let file = this.app.vault.getAbstractFileByPath(filePath) as TFile | null;
 
         if (file) {
-            new Notice(`File "${file.name}" already exists!`);
             return;
         }
 
