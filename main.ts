@@ -110,7 +110,7 @@ export default class MyPlugin extends Plugin {
             if (fileSelfDev instanceof TFolder) {
                 await this.selfDevManager.createDailyFile(); // Creating the section for today
                 const tasks = await this.selfDevManager.getTodayTasks();
-                new Notice(`Today's tasks: ${tasks.length > 0 ? tasks.join(', ') : 'no tasks found'}`);
+                // new Notice(`Today's tasks: ${tasks.length > 0 ? tasks.join(', ') : 'no tasks found'}`);
 
                 // Checking if tasks have been transferred today 
                 //-----
