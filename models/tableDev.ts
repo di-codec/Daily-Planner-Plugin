@@ -1,6 +1,5 @@
 import Chart, { ChartItem } from "chart.js/auto";
 
-// ⚡ без типов, чтобы TS не ругался
 const yaml = require("js-yaml");
 
 export interface HabitChartData {
@@ -16,7 +15,7 @@ export class TableChart {
     constructor() {}
 
     /**
-     * Построить график из YAML (или использовать демо-данные)
+     * Build a chart from YAML (or use demo data)
      */
     public renderChart(source: string, el: HTMLElement) {
         const container = el.createEl("div", { cls: "habit-chart-container" });
@@ -68,7 +67,7 @@ export class TableChart {
     }
 
     /**
-     * Демо-данные (если YAML пустой или ошибка)
+     * Demo data (if YAML is empty or has an error)
      */
     private getDemoData(): HabitChartData {
         return {
@@ -86,7 +85,7 @@ export class TableChart {
     }
 
     /**
-     * Сгенерировать готовый Markdown-файл с демо-данными
+     * Generate a ready-made Markdown file with demo data
      */
     public generateDemoFileContent(): string {
         return `# 🏋️ Weekly Health Tracker

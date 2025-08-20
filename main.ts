@@ -25,12 +25,12 @@ export default class MyPlugin extends Plugin {
         //================== Chart TEST ==========================
         
         this.chart = new TableChart()
-        // регистрируем код-блок
+        // Register the code block
         this.registerMarkdownCodeBlockProcessor("habit-chart", (source, el) => {
             this.chart.renderChart(source, el);
         });
 
-        // команда для авто-создания файла
+        // Command for auto-creating a file
         this.addCommand({
             id: "create-habit-chart-file",
             name: "📊 Create Chart File",

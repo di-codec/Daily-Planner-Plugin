@@ -104,7 +104,6 @@ export class SummaryManager {
                     const cellIndex = dayIndex + 2;
                     if (cellIndex < columns.length) {
                         const cell = columns[cellIndex].trim();
-                        // твоя логика проверки ☑️ оставлена как есть
                         if (cell.includes("☑️") || cell.includes("unchecked")) {
                             habitData[muscleGroup][dayIndex] = 0;
                         } else {
