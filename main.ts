@@ -34,24 +34,6 @@ export default class MyPlugin extends Plugin {
         this.addCommand({
             id: "create-habit-chart-file",
             name: "📊 Create Chart File",
-            // callback: async () => {
-            //     const fileName = "Habits Chart.md";
-            //     const demoContent = this.chart.generateDemoFileContent();
-
-            //     let file: TFile | null = this.app.vault.getAbstractFileByPath(fileName) as TFile;
-
-            //     if (!file) {
-            //         file = await this.app.vault.create(fileName, demoContent);
-            //         new Notice(`File '${fileName}' created with demo chart ✅`);
-            //     } else {
-            //         await this.app.vault.modify(file, demoContent);
-            //         new Notice(`File '${fileName}' updated with demo chart ✅`);
-            //     }
-
-            //     // открыть файл
-            //     const leaf = this.app.workspace.getLeaf(true);
-            //     await leaf.openFile(file);
-            // }
         });
         //============================================
 
