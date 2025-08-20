@@ -3,7 +3,7 @@ import { Notice, Plugin, addIcon, TAbstractFile, TFolder, TFile, WorkspaceLeaf, 
 import { SelfDevManager } from './models/selfDevModel';
 import { HealthTrackerManager } from "./models/healthTrackerModel";
 import { SummaryManager } from "./models/summaryManager2";
-import {TableChart } from './models/tableDev';
+import {TableChart } from './utils/stacked-bar-chart';
 import { PassThrough } from 'stream';
 
 
