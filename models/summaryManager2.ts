@@ -118,7 +118,7 @@ export class SummaryManager {
     }
 
     /**
-     * Assembly of YAML data for the habit-chart block
+     * Assembly of YAML data for the stacked-bar-chart block
      */
     private generateChartYaml(habitData: { [muscleGroup: string]: number[] }): string {
         const datasets = MUSCLE_GROUPS.map(muscleGroup => ({
