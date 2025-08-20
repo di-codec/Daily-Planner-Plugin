@@ -18,7 +18,7 @@ export class TableChart {
      * Build a chart from YAML (or use demo data)
      */
     public renderChart(source: string, el: HTMLElement) {
-        const container = el.createEl("div", { cls: "habit-chart-container" });
+        const container = el.createEl("div", { cls: "stacked-bar-chart-container" });
         const canvas = container.createEl("canvas");
         const ctx = canvas.getContext("2d");
 
@@ -90,7 +90,7 @@ export class TableChart {
     public generateDemoFileContent(): string {
         return `# 🏋️ Weekly Health Tracker
 
-\`\`\`habit-chart
+\`\`\`stacked-bar-chart
 labels:
   - Monday
   - Tuesday

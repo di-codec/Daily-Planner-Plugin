@@ -27,13 +27,13 @@ export default class MyPlugin extends Plugin {
         
         this.chart = new TableChart()
         // Register the code block
-        this.registerMarkdownCodeBlockProcessor("habit-chart", (source, el) => {
+        this.registerMarkdownCodeBlockProcessor("stacked-bar-chart", (source, el) => {
             this.chart.renderChart(source, el);
         });
 
         // Command for auto-creating a file
         this.addCommand({
-            id: "create-habit-chart-file",
+            id: "create-stacked-bar-chart-file",
             name: "📊 Create Chart File",
         });
         //============================================

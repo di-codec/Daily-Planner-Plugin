@@ -138,7 +138,7 @@ export class SummaryManager {
         });
 
         return `
-\`\`\`habit-chart
+\`\`\`stacked-bar-chart
 ${yamlLines.join("\n")}
 \`\`\`
         `.trim();
