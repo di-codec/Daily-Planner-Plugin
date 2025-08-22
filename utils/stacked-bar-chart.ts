@@ -36,7 +36,7 @@ export class TableChart {
         }
 
         if (ctx) {
-            new Chart(ctx as ChartItem, {
+            new Chart(ctx as ChartItem, { 
                 type: "bar",
                 data: chartData,
                 options: {
