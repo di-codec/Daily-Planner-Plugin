@@ -15,7 +15,7 @@ export default class MyPlugin extends Plugin {
 
     async onload() {
 
-        // console.log('loading plugin');
+        console.log('loading plugin 🚀');
 
         addIcon('circle', '<circle cx="50" cy="50" r="50" fill="currentColor"/>');
 
@@ -178,7 +178,7 @@ export default class MyPlugin extends Plugin {
     }
 
     async onunload() {
-        console.log('unloading plugin');
+        console.log('unloading plugin ⛔');
     }
 }
 
