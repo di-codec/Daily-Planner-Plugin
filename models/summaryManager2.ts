@@ -113,7 +113,6 @@ export class SummaryManager {
                 }
             }
         }
-        console.log(`YOGA${JSON.stringify(habitData.data, null, 2)}`);
         return habitData;
     }
 
