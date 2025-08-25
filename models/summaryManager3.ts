@@ -23,159 +23,72 @@ interface SummaryStats {
         this.app = app;
     }
     
-    // public async GenerateWeekSummary(date:Date): Promise<{
-    //     tasks: { description: string; completed: boolean }[];
-    //     migratedDate: string | null; }> 
-    // {
-    //     const yearName = `${date.getFullYear().toString()} Year`;
-    //     const monthName = `📅 ${date.toLocaleDateString("en-GB", { month: "long" })}`;
-    //     const dayName = `📅 ${date.toLocaleDateString("en-GB", { day: "numeric", month: "long"})}.md`;
-    //     const filePath = `Daily Planner/Self Development/${yearName}/${monthName}/${dayName}`;
-
-    //     const file = this.app.vault.getAbstractFileByPath(normalizePath(filePath));
-
-    //     if (!(file instanceof TFile)) {
-    //         console.warn(`File not found: ${filePath}`);
-    //         return { tasks: [], migratedDate: null };
-    //     }
-
-    //     try {
-    //         const content = await this.app.vault.read(file);
-    //         return this.parseContent(content);
-    //     } catch (error) {
-    //         console.error(`Error reading file ${filePath}:`, error);
-    //         return { tasks: [], migratedDate: null };
-    //     }
-    // }
-    private calculateStartWeek(date: Date): string{
-        const startOfWeek = this.getStartOfWeek(date);
-        const DaysOfWeek = new Date(startOfWeek);
-        // const dates: {day: number; month: string}[]=[];
-        for (let i = 0; i < 7; i++ ){
-            const current = new Date(startOfWeek);
-            current.setDate(startOfWeek.getDate() + i);
-            const startDay =current.getDate();
-            const startMonth = current.toLocaleDateString("eng-GB", {month: "long"});
-            // dates.push({
-            //     day: current.getDate(),
-            //     month: current.toLocaleDateString("en-GB", { day: "numeric", month: "long"}),
-            // });
-
-            DaysOfWeek.setDate(startOfWeek.getDate() +i);
-            // console.log(`✅ Every Day Of Week: ${DaysOfWeek}`);
-            // const TasksPath = `Daily Planner/Self Development/${yearName}/${monthName}/${dates}`;
-            // // console.log(`✅ Start Of Week: ${dates}`);
-            console.log(`✅ Start Of Week: 📅 ${startDay} ${startMonth}`);
-            // console.log(`📅 ${dates}.md`)
-
-        }
-        // const TasksPath = `Daily Planner/Self Development/${yearName}/${monthName}/${dates}`;
-        // console.log(`✅ Start Of Week: ${TasksPath}`);
-        // console.log(``)
-        return``
-    }
 
     public async readDailyTasksFile(date:Date): Promise<{
-        tasks: string[]; content: string; }>
+        tasks: string[]; 
+        content: string; 
+        totalUnfinishedTasks: number;
+        totalFinishedTasks: number;
+    }>
     {
         const yearName = this.getFileNameByYear(date);
         const monthName = this.getFileNameByMonth(date);
-        const dayName = this.getFileNameByDate(date);
-        const startOfWeek = this.calculateStartWeek(date);
-        await startOfWeek;
-        // const startOfWeek = this.getStartOfWeek(date);
-        // const DaysOfWeek = new Date(startOfWeek);
-        // const dates: {day: number; month: string}[]=[];
-        // for (let i = 0; i < 7; i++ ){
-        //     const current = new Date(startOfWeek);
-        //     current.setDate(startOfWeek.getDate() + i);
-        //     dates.push({
-        //         day: current.getDate(),
-        //         month: current.toLocaleDateString("en-GB", { day: "numeric", month: "long"}),
-        //     });
+        const startOfWeek = this.getStartOfWeek(date);
+        const allUnfinishedTasks: string[] = [];
+        let allContent = "";
+        let totalUnfinishedTasks = 0;
+        let totalFinishedTasks = 0;
 
-        //     DaysOfWeek.setDate(startOfWeek.getDate() +i);
-        //     // console.log(`✅ Every Day Of Week: ${DaysOfWeek}`);
-        //     // const TasksPath = `Daily Planner/Self Development/${yearName}/${monthName}/${dates}`;
-        //     // // console.log(`✅ Start Of Week: ${dates}`);
-        //     // console.log(`✅ Start Of Week: ${TasksPath}`);
-        //     return `📅 ${dates}.md`
+        for (let i = 0; i < 7; i++) {
+            const current = new Date(startOfWeek);
+            current.setDate(startOfWeek.getDate() + i);
+            const startDay = current.getDate();
+            const startMonth = current.toLocaleDateString("en-GB", { month: "long" });
 
-        // }
-        // const TasksPath = `Daily Planner/Self Development/${yearName}/${monthName}/${dates}`;
-        // console.log(`✅ Start Of Week: ${TasksPath}`);
+            // Form the file path for each day
+            const filePath = `Daily Planner/Self Development/${yearName}/📅 ${startMonth}/📅 ${startDay} ${startMonth}.md`;
+            const file = this.app.vault.getAbstractFileByPath(filePath);
 
-
-        const filePath = `Daily Planner/Self Development/${yearName}/${monthName}/${dayName}`;
-        const file = this.app.vault.getAbstractFileByPath(filePath);
-
-        if (!(file instanceof TFile)){
+            if (!(file instanceof TFile)) {
             console.warn(`Task file not found: ${filePath}`);
-            return { tasks: [], content: ""} ;
-        }
+            continue; // Pass if file not found
+            }
 
-        try {
+            try {
             const content = await this.app.vault.read(file);
             const unfinishedTasks = content
                 .split('\n')
-                .filter(line => line.trim().startsWith('- [')&& !line.trim().startsWith('- [x]'))
+                .filter(line => line.trim().startsWith('- [') && !line.trim().startsWith('- [x]'))
                 .map(line => line.trim());
-            console.log(`🛠️ Unfinished tasks count:: ${unfinishedTasks.length}`)
-            
+            // console.log(`🛠️ Unfinished tasks count for ${startDay} ${startMonth}: ${unfinishedTasks.length}`);
+            totalUnfinishedTasks += unfinishedTasks.length;
+
             const finishedTasks = content
                 .split('\n')
                 .filter(line => line.trim().startsWith('- [x]'))
                 .map(line => line.trim());
-            console.log(`🛠️ Finished tasks count:: ${finishedTasks.length}`)
-            return { tasks: unfinishedTasks, content };
+            // console.log(`🛠️ Finished tasks count for ${startDay} ${startMonth}: ${finishedTasks.length}`);
+            totalFinishedTasks += finishedTasks.length;
 
-        } catch (e){
-            console.log(`Error: ${e.message}`)
-            return {tasks: [], content: ""}
+            allUnfinishedTasks.push(...unfinishedTasks);
+            allContent += content + "\n"; // Add content with a separator
+            } catch (e) {
+            console.error(`Error reading file ${filePath}: ${e.message}`);
+            continue; // Skip on read error
+            }
         }
+
+        console.log("======================")
+        console.log(`📊 Total Unfinished Tasks for the week: ${totalUnfinishedTasks}`);
+        console.log(`📊 Total Finished Tasks for the week: ${totalFinishedTasks}`);
+        console.log("======================")
+        return { 
+            tasks: allUnfinishedTasks, 
+            content: allContent.trim(),
+            totalUnfinishedTasks,
+            totalFinishedTasks
+        };
     }
-
-    // private parseContent(content: string): {
-    //     tasks: { description: string; completed: boolean }[];
-    //     migratedDate: string | null;
-    // } {
-    //     const lines = content.split("\n");
-    //     const tasks: { description: string; completed: boolean }[] = [];
-    //     let migratedDate: string | null = null;
-
-    //     let inTasksSection = false;
-
-    //     for (const line of lines) {
-    //         const trimmedLine = line.trim();
-
-    //         // Пропускаем пустые строки и заголовок
-    //         if (!trimmedLine || trimmedLine.startsWith("#")) {
-    //             continue;
-    //         }
-
-    //         // Определяем начало секции задач (после заголовка)
-    //         if (trimmedLine === "-----------------") {
-    //             inTasksSection = false; // После разделителя переходим к миграции
-    //             continue;
-    //         }
-
-    //         if (inTasksSection && trimmedLine.startsWith("- [")) {
-    //             const match = trimmedLine.match(/^- \[([ x])\] (.*)/);
-    //             if (match) {
-    //                 const completed = match[1].trim() === "x";
-    //                 const description = match[2].trim();
-    //                 tasks.push({ description, completed });
-    //             }
-    //         } else if (trimmedLine.startsWith("Migrated:")) {
-    //             migratedDate = trimmedLine.replace("Migrated:", "").trim();
-    //         } else if (!inTasksSection && tasks.length === 0) {
-    //             inTasksSection = true; // Активируем парсинг задач после заголовка
-    //         }
-    //     }
-
-    //     return { tasks, migratedDate };
-    // }
-
 
     // GET the folder name by year
     // Calculate the start of the week (Monday)
