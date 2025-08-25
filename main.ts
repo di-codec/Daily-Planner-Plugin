@@ -5,6 +5,7 @@ import { HealthTrackerManager } from "./models/healthTrackerModel";
 import { SummaryManager } from "./models/summaryManager2";
 import {TableChart } from './utils/stacked-bar-chart';
 import { PassThrough } from 'stream';
+import {SummaryManagerTasks} from './models/summaryManager3';
 
 
 export default class MyPlugin extends Plugin {
@@ -12,6 +13,7 @@ export default class MyPlugin extends Plugin {
     private healthTrackerManager: HealthTrackerManager;
     private summaryManager: SummaryManager;
     private chart: TableChart;
+    private summaryTasks: SummaryManagerTasks;
 
     async onload() {
 
@@ -21,6 +23,10 @@ export default class MyPlugin extends Plugin {
 
         // Initialize SummaryManager
         this.summaryManager = new SummaryManager(this.app);
+
+        this.summaryTasks = new SummaryManagerTasks(this.app);
+
+        await this.summaryTasks.readDailyTasksFile(new Date);
 
 
         //================== Chart TEST ==========================
