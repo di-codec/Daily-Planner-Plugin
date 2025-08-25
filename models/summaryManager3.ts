@@ -1,20 +1,4 @@
 import { App, TFile, normalizePath } from "obsidian";
-import { ensureFoldersExist } from "../utils/utils";
-import { PassThrough } from "stream";
-
-
-interface SummaryStats {
-    workoutsThisWeek: number;
-    focusMuscle: string;
-    focusPercent: number;
-    tasksCompleted: number;
-    tasksTotal: number;
-    streak: number;
-    barData: number[];
-    pieData: { label: string; value: number }[];
-    deltaWorkouts: number;
-    deltaTasks: number;
-  }
 
   export class SummaryManagerTasks {
     private app: App;
@@ -32,7 +16,6 @@ interface SummaryStats {
     }>
     {
         const yearName = this.getFileNameByYear(date);
-        const monthName = this.getFileNameByMonth(date);
         const startOfWeek = this.getStartOfWeek(date);
         const allUnfinishedTasks: string[] = [];
         let allContent = "";
@@ -60,14 +43,12 @@ interface SummaryStats {
                 .split('\n')
                 .filter(line => line.trim().startsWith('- [') && !line.trim().startsWith('- [x]'))
                 .map(line => line.trim());
-            // console.log(`🛠️ Unfinished tasks count for ${startDay} ${startMonth}: ${unfinishedTasks.length}`);
             totalUnfinishedTasks += unfinishedTasks.length;
 
             const finishedTasks = content
                 .split('\n')
                 .filter(line => line.trim().startsWith('- [x]'))
                 .map(line => line.trim());
-            // console.log(`🛠️ Finished tasks count for ${startDay} ${startMonth}: ${finishedTasks.length}`);
             totalFinishedTasks += finishedTasks.length;
 
             allUnfinishedTasks.push(...unfinishedTasks);
