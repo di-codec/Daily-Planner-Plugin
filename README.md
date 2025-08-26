@@ -154,3 +154,75 @@ Example table (as shown in the screenshot):
 | Shoulders          |    |  |    |  | ✅ |    |  |
 | Jogging            |  ✅  |  |    |  |  |    |  |
 | Yoga               |    |  |    | ✅ |  |    |  |
+
+
+### Weekly Summaries
+
+- Generated in `Daily Planner/Summary.md`.
+- Includes:
+
+	- Health Tracker chart (stacked bar for habits).
+	- Task progress bar (e.g., █████░░░░░ 50%).
+	- Stats: Total tasks, completed, remaining, average per day.
+
+
+- Updated when ribbon icon is clicked or via commands.
+
+### Charts and Visualizations
+
+- Uses a custom `stacked-bar-chart` code block in markdown.
+- Parses YAML for labels, datasets, and colors.
+- Renders with Chart.js.
+- Example YAML:
+
+```text
+stacked-bar-chart
+labels:
+  - Monday
+  - Tuesday
+datasets:
+  - label: Glutes
+    data: [1, 0]
+    backgroundColor: "#FF69B4"
+```
+
+## Configuration
+
+- Hardcoded paths in managers (e.g., `mainFileDirectory: "Daily Planner"`, `taskFileDirectory: "✅ Tasks"`, `healthTrackerFileDirectory: "❤️ Health Tracker"`). Edit in `selfDevModel.ts`, `healthTrackerModel.ts`, etc.
+- Default habits and colors in `summaryManager.ts` and `healthTrackerModel.ts`.
+- No user-facing settings tab yet (add via `PluginSettingTab` if needed).
+
+## Code Structure
+
+- **main.ts:** Plugin entry point. Initializes managers, adds commands/icons, handles onload/unload.
+- **selfDevModel.ts:** Manages daily task files, creation, migration, and reading.
+- **healthTrackerModel.ts:** Manages weekly health files, dynamic habits, and summaries.
+- **summaryManager.ts:** Generates summaries, reads tasks/habits, creates YAML for charts.
+- **selfDev.ts:** Utility to append tasks.
+- **stacked-bar-chart.ts:** Chart rendering logic with Chart.js and YAML parsing.
+- **utils.ts:** Folder creation utility.
+
+## Key Classes:
+
+- `SelfDevManager:` Task handling.
+- `HealthTrackerManager:` Habit tracking.
+- `SummaryManager:` Reporting and charts.
+
+## Troubleshooting
+
+- **File Not Found:** Ensure the ribbon icon is clicked to create folders/files.
+- **Chart Not Rendering:** Check YAML syntax in code blocks; use demo data for testing.
+- **Migration Issues:** Verify date formats and file paths.
+- **Errors in Console:** Check Obsidian's developer console (Ctrl/Cmd + Shift + I) for logs.
+- **Truncated Content:** Some code snippets are truncated in docs; refer to source files.
+- **Checkboxes Not Working:** Ensure "Markdown Table Checkboxes" plugin is installed and enabled.
+
+## Contributing
+
+- Fork the repo on GitHub.
+- Create a feature branch.
+- Submit a pull request with changes.
+- Issues: Report bugs or suggest features via GitHub Issues.
+
+## License
+MIT License. See LICENSE for details.
