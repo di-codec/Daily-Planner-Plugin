@@ -109,7 +109,7 @@ ${progressBar} **${tasksPercent}%**
             const startDay = current.getDate();
             const startMonth = current.toLocaleDateString("en-GB", { month: "long" });
 
-            const filePath = `Daily Planner/Self Development/${yearName}/📅 ${startMonth}/📅 ${startDay} ${startMonth}.md`;
+            const filePath = `Daily Planner/✅Tasks/${yearName}/📅 ${startMonth}/📅 ${startDay} ${startMonth}.md`;
             const file = this.app.vault.getAbstractFileByPath(filePath);
 
             if (!(file instanceof TFile)) {
@@ -161,7 +161,7 @@ ${progressBar} **${tasksPercent}%**
         const monthName = this.getFileNameByMonth(date);
         const weekName = this.getFileNameByWeek(date);
 
-        const filePath = `Daily Planner/Health Tracker/${monthName}/${weekName}`;
+        const filePath = `Daily Planner/❤️Health Tracker/${monthName}/${weekName}`;
         const file = this.app.vault.getAbstractFileByPath(filePath);
 
         if (!(file instanceof TFile)) {
@@ -305,7 +305,7 @@ ${yamlLines.join("\n")}
         const previousWeekStart = new Date(this.getStartOfWeek(date));
         previousWeekStart.setDate(previousWeekStart.getDate() - 7); // Switch to the previous week
 
-        const previousPath = `Daily Planner/Health Tracker/${this.getFileNameByMonth(previousWeekStart)}/${this.getFileNameByWeek(previousWeekStart)}`;
+        const previousPath = `Daily Planner/❤️Health Tracker/${this.getFileNameByMonth(previousWeekStart)}/${this.getFileNameByWeek(previousWeekStart)}`;
         const previousFile = this.app.vault.getAbstractFileByPath(normalizePath(previousPath)) as TFile | null;
 
         if (!previousFile) {

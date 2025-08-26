@@ -40,7 +40,7 @@ export default class MyPlugin extends Plugin {
 
         this.selfDevManager = new SelfDevManager(this.app, {
             mainFileDirectory: "Daily Planner",
-            taskFileDirectory: "Self Development" 
+            taskFileDirectory: "✅Tasks" 
         });
 
         // Adding tasks command
@@ -56,7 +56,7 @@ export default class MyPlugin extends Plugin {
 
         this.healthTrackerManager = new HealthTrackerManager(this.app, {
             mainFileDirectory: "Daily Planner",
-            healthTrackerFileDirectory: "Health Tracker"
+            healthTrackerFileDirectory: "❤️Health Tracker"
         });
 
         // Adding Health Tracker command
@@ -73,8 +73,8 @@ export default class MyPlugin extends Plugin {
         // Structure and tasks manager creation through 2ribbon icon"
         this.addRibbonIcon('circle', 'Manager', async () => {
             const folderPath = "Daily Planner";
-            const folderSelfDevPath = "Self Development";
-            const folderHealthTrackerPath = "Health Tracker";
+            const folderSelfDevPath = "✅Tasks";
+            const folderHealthTrackerPath = "❤️Health Tracker";
             const filePathSelfDev = `${folderPath}/${folderSelfDevPath}`;
             const folderPathHealth = `${folderPath}/${folderHealthTrackerPath}`;
             // Summary file
@@ -89,36 +89,33 @@ export default class MyPlugin extends Plugin {
                 folder = this.app.vault.getAbstractFileByPath(folderPath);
             }
 
-            //=================== SELF DEVELOPMENT ====================================
+            //=================== TASKS ====================================
 
-            // Creatin "Self Development" Folder
+            // Creatin "Tasks" Folder
             if (!this.app.vault.getAbstractFileByPath(`${folderPath}/${folderSelfDevPath}`)) {
-                console.log(`Creating inside directory 'Self Development': ${folderSelfDevPath}`);
+                console.log(`Creating inside directory 'Tasks': ${folderSelfDevPath}`);
                 await this.app.vault.createFolder(`${folderPath}/${folderSelfDevPath}`);
-                new Notice('Inside directory "Self Development" created!');
+                new Notice('Inside directory "✅Tasks" created!');
             }
 
-            // Checking and Creation "Self Development" folder
+            // Checking and Creation "Tasks" folder
             let fileSelfDev = this.app.vault.getAbstractFileByPath(filePathSelfDev);
             if (!fileSelfDev) {
                 console.log('✅ Creating file:', filePathSelfDev);
                 fileSelfDev = await this.app.vault.createFolder(filePathSelfDev);
-                new Notice('✅ Direction "Self Development" created!');
+                new Notice('✅ Direction "✅Tasks" created!');
             }
 
             if (fileSelfDev instanceof TFolder) {
                 await this.selfDevManager.createDailyFile(); // Creating the section for today
                 const tasks = await this.selfDevManager.getTodayTasks();
-                // new Notice(`Today's tasks: ${tasks.length > 0 ? tasks.join(', ') : 'no tasks found'}`);
 
                 // Checking if tasks have been transferred today 
-                //-----
                 const today = new Date().toLocaleDateString("en-GB");
-                //-----
+                
                 const todayFilePath = this.selfDevManager.getFilePathByDate(new Date());
                 const todayFile = this.app.vault.getAbstractFileByPath(todayFilePath) as TFile;
-                // let content = await this.app.vault.read(todayFile);
-                //-----
+
                 if (todayFile) {
                     let content = await this.app.vault.read(todayFile);
                     const migrationMarker = `Migrated: ${today}\n`;
@@ -140,25 +137,21 @@ export default class MyPlugin extends Plugin {
 
             // Creating "Health Tracker" Folder 
             if (!this.app.vault.getAbstractFileByPath(`${folderPath}/${folderHealthTrackerPath}`)) {
-                // console.log(`Creating inside directory 'Health Tracker': ${folderHealthTrackerPath}`);
                 await this.app.vault.createFolder(`${folderPath}/${folderHealthTrackerPath}`);
-                new Notice('Inside directory "Health Tracker" created!');
+                new Notice('Inside directory "❤️Health Tracker" created!');
             }
 
             // Checking and Create "Health Tracker" folder
             let filePathHealthTracker = this.app.vault.getAbstractFileByPath(folderPathHealth);
             if (!filePathHealthTracker) {
-                // console.log('✅ Creating folder:', folderPathHealth);
                 filePathHealthTracker = await this.app.vault.createFolder(folderPathHealth);
-                new Notice('✅ Direction "Health Tracker" created!');
+                new Notice('✅ Direction "❤️Health Tracker" created!');
             }
 
             if (filePathHealthTracker instanceof TFolder) {
                 await this.healthTrackerManager.createWeeklyFile();
                 const summary =  await this.healthTrackerManager.getThisWeekSummary();
                 new Notice (`${summary}`);
-                // Generate summary after creating the tracker
-                // await this.summaryManager.generateWeeklySummary(new Date(), "Daily Planner/Summary.md");
                 // Generate summary after creating the tracker
                 const dailyTasks = await this.summaryManager.readDailyTasksFile(new Date());
                 await this.summaryManager.generateWeeklySummary(dailyTasks, new Date(), "Daily Planner/Summary.md");
@@ -174,9 +167,6 @@ export default class MyPlugin extends Plugin {
        
         //================== SUMMARY =========================
 
-        // SummaryManager Initialization
-        // const summaryManager = new SummaryManager(this.app);
-        // await summaryManager.generateWeeklySummary(new Date(), "Daily Planner/Summary.md");
         // SummaryManager Initialization
         const summaryManager = new SummaryManager(this.app);
         const dailyTasks = await summaryManager.readDailyTasksFile(new Date());

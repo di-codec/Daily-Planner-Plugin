@@ -45,7 +45,7 @@ export class SelfDevManager {
         let file = this.app.vault.getAbstractFileByPath(filePath) as TFile | null;
 
         if (!file) {
-            file = await this.app.vault.create(filePath, `# Self Development - ${new Date().toLocaleDateString("en-GB")}\n\n`);
+            file = await this.app.vault.create(filePath, `# ✅Tasks - ${new Date().toLocaleDateString("en-GB")}\n\n`);
             new Notice(`Fail "${file.name}" created!`);
         } else {
             PassThrough
