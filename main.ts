@@ -165,7 +165,10 @@ export default class MyPlugin extends Plugin {
                 const summary =  await this.healthTrackerManager.getThisWeekSummary();
                 new Notice (`${summary}`);
                 // Generate summary after creating the tracker
-                await this.summaryManager.generateWeeklySummary(new Date(), "Daily Planner/Summary.md");
+                // await this.summaryManager.generateWeeklySummary(new Date(), "Daily Planner/Summary.md");
+                // Generate summary after creating the tracker
+                const dailyTasks = await this.summaryManager.readDailyTasksFile(new Date());
+                await this.summaryManager.generateWeeklySummary(dailyTasks, new Date(), "Daily Planner/Summary.md");
             }
 
             // Create or update Summary.md
@@ -179,8 +182,12 @@ export default class MyPlugin extends Plugin {
         //================== SUMMARY =========================
 
         // SummaryManager Initialization
+        // const summaryManager = new SummaryManager(this.app);
+        // await summaryManager.generateWeeklySummary(new Date(), "Daily Planner/Summary.md");
+        // SummaryManager Initialization
         const summaryManager = new SummaryManager(this.app);
-        await summaryManager.generateWeeklySummary(new Date(), "Daily Planner/Summary.md");
+        const dailyTasks = await summaryManager.readDailyTasksFile(new Date());
+        await summaryManager.generateWeeklySummary(dailyTasks, new Date(), "Daily Planner/Summary.md");
     }
 
     async onunload() {
