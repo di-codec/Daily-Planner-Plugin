@@ -13,6 +13,17 @@ const MUSCLE_COLORS = {
     "Yoga": "#808080"       // Grey
 };
 
+// Hash the string and get HEX
+function hashColor(str: string): string {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        hash = str.charCodeAt(i) + ((hash << 5) - hash);
+        hash = hash & hash; // 32-бит
+    }
+    const color = (hash & 0x00FFFFFF).toString(16).toUpperCase();
+    return "#" + "000000".substring(0, 6 - color.length) + color;
+}
+
 export class SummaryManager {
     private app: App;
 
@@ -227,12 +238,17 @@ ${progressBar} **${tasksPercent}%**
      * Assembly of YAML data for the stacked-bar-chart block
      */
     private generateChartYaml(habitData: { [muscleGroup: string]: number[] }): string {
+
+
         const muscleGroups = Object.keys(habitData); // Dynamic list from data
-        const datasets = muscleGroups.map(muscleGroup => ({
-            label: muscleGroup,
-            data: habitData[muscleGroup] || new Array(7).fill(0),
-            backgroundColor: MUSCLE_COLORS[muscleGroup as keyof typeof MUSCLE_COLORS] || "#808080" // Fallback color
-        }));
+        const datasets = muscleGroups.map(muscleGroup => {
+            const color = MUSCLE_COLORS[muscleGroup as keyof typeof MUSCLE_COLORS] || hashColor(muscleGroup);
+            return {
+                label: muscleGroup,
+                data: habitData[muscleGroup] || new Array(7).fill(0),
+                backgroundColor: color
+            };
+        });
 
         const yamlLines: string[] = [];
         yamlLines.push("labels:");
