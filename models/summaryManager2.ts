@@ -25,15 +25,50 @@ export class SummaryManager {
     /**
      * Main method for generating the summary
      */
-    async generateWeeklySummary(date: Date, summaryPath: string = "Daily Planner/Summary.md"): Promise<void> {
+
+    async generateWeeklySummary(stats:{totalTasks: number, totalUnfinishedTasks: number; totalFinishedTasks: number} ,date: Date, summaryPath: string = "Daily Planner/Summary.md"): Promise<void> {
         try {
             const habitData = await this.readWeekFile(date);
             const chartYaml = this.generateChartYaml(habitData);
 
             await ensureFoldersExist(this.app, summaryPath);
 
-            const summaryContent = `# 🏋️ Health Tracker Summary\n\n${chartYaml}\n`;
+            const {totalTasks, totalUnfinishedTasks, totalFinishedTasks } = stats;
+            const tasksPercent = totalTasks > 0 ? Math.round((totalFinishedTasks / totalTasks) * 100) : 0;
+            const progressBlocks = Math.round(tasksPercent / 10);
+            const progressBar = "█".repeat(progressBlocks) + "░".repeat(10 - progressBlocks);
+            
+            // Get week date range for the header
+            const startOfWeek = this.getStartOfWeekSelfDev(date);
+            const endOfWeek = new Date(startOfWeek);
+            endOfWeek.setDate(startOfWeek.getDate() + 6);
+            
+            const startDate = startOfWeek.getDate();
+            const endDate = endOfWeek.getDate();
+            const startMonth = startOfWeek.toLocaleDateString("en-GB", { month: "long" });
+            const endMonth = endOfWeek.toLocaleDateString("en-GB", { month: "long" });
+            
+            const weekRange = startMonth === endMonth 
+                ? `${startDate} - ${endDate} ${startMonth}`
+                : `${startDate} ${startMonth} - ${endDate} ${endMonth}`;
+
+            const summaryContent = `# 🏋️ Health Tracker Summary
+
+${chartYaml}
+
+---
+
+## ✅ Task Summary (📅 ${weekRange})
+Progress:
+${progressBar}
+
+**Total Tasks:** ${totalTasks}
+**Completed:** ${totalFinishedTasks}
+**Remaining:** ${totalUnfinishedTasks}
+**Completion Rate:** ${tasksPercent}%`;
+
             await this.app.vault.adapter.write(normalizePath(summaryPath), summaryContent);
+
             console.log(`Summary generated at: ${summaryPath}`);
         } catch (error) {
             console.error("Error generating summary:", error);
@@ -41,7 +76,78 @@ export class SummaryManager {
     }
 
     /**
-     * Read data from a specific week file
+     *  Read SelfDev data from a specific days file
+     */
+
+    public async readDailyTasksFile(date:Date): Promise<{
+        tasks: string[]; 
+        content: string; 
+        totalUnfinishedTasks: number;
+        totalFinishedTasks: number;
+        totalTasks: number;
+    }>
+    {
+        const yearName = this.getFileNameByYear(date);
+        const startOfWeek = this.getStartOfWeekSelfDev(date);
+        const allUnfinishedTasks: string[] = [];
+        let allContent = "";
+        let totalUnfinishedTasks = 0;
+        let totalFinishedTasks = 0;
+        let totalTasks= 0;
+
+        for (let i = 0; i < 7; i++) {
+            const current = new Date(startOfWeek);
+            current.setDate(startOfWeek.getDate() + i);
+            const startDay = current.getDate();
+            const startMonth = current.toLocaleDateString("en-GB", { month: "long" });
+
+            // Form the file path for each day
+            const filePath = `Daily Planner/Self Development/${yearName}/📅 ${startMonth}/📅 ${startDay} ${startMonth}.md`;
+            const file = this.app.vault.getAbstractFileByPath(filePath);
+
+            if (!(file instanceof TFile)) {
+            console.warn(`Task file not found: ${filePath}`);
+            continue; // Pass if file not found
+            }
+
+            try {
+            const content = await this.app.vault.read(file);
+            const unfinishedTasks = content
+                .split('\n')
+                .filter(line => line.trim().startsWith('- [') && !line.trim().startsWith('- [x]'))
+                .map(line => line.trim());
+            totalUnfinishedTasks += unfinishedTasks.length;
+
+            const finishedTasks = content
+                .split('\n')
+                .filter(line => line.trim().startsWith('- [x]'))
+                .map(line => line.trim());
+            totalFinishedTasks += finishedTasks.length;
+
+            allUnfinishedTasks.push(...unfinishedTasks);
+            allContent += content + "\n"; // Add content with a separator
+            } catch (e) {
+            console.error(`Error reading file ${filePath}: ${e.message}`);
+            continue; // Skip on read error
+            }
+        }
+        totalTasks = totalFinishedTasks + totalUnfinishedTasks;
+
+        console.log("======================")
+        console.log(`📊 Total Unfinished Tasks for the week: ${totalUnfinishedTasks}`);
+        console.log(`📊 Total Finished Tasks for the week: ${totalFinishedTasks}`);
+        console.log("======================")
+        return { 
+            tasks: allUnfinishedTasks, 
+            content: allContent.trim(),
+            totalUnfinishedTasks,
+            totalFinishedTasks,
+            totalTasks
+        };
+    }
+
+    /**
+     * Read Health Tracker data from a specific week file
      */
     private async readWeekFile(date: Date): Promise<{ [muscleGroup: string]: number[] }> {
         // Initialize the structure
@@ -175,4 +281,18 @@ ${yamlLines.join("\n")}
         startOfWeek.setHours(0, 0, 0, 0); // Reset time to midnight
         return startOfWeek;
     }
+    
+    private getFileNameByYear (date: Date): string {
+        const yearDate = date.toLocaleDateString("en-GB", {year: "numeric"})
+        return `${yearDate} Year`
+    }
+    private getStartOfWeekSelfDev(date: Date): Date {
+        const startOfWeek = new Date(date);
+        const day = startOfWeek.getDay(); // Sunday = 0, Monday = 1, ...
+        const offset = day === 0 ? 6 : day + 6; // Adjust for Monday start
+        startOfWeek.setDate(startOfWeek.getDate() - offset);
+        startOfWeek.setHours(0, 0, 0, 0); // Reset time to midnight
+        return startOfWeek;
+    }
+    
 }
