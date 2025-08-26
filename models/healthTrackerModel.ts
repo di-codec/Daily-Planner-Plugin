@@ -1,7 +1,6 @@
 import { App, Notice, TFile, TFolder } from "obsidian";
 import { ensureFoldersExist } from "../utils/utils";
 
-
 export class HealthTrackerManager {
     private app: App;
     private settings: {
@@ -13,6 +12,9 @@ export class HealthTrackerManager {
         this.app = app;
         this.settings = settings;
     }
+
+    //Default list of muscle groups (used only if there is no previous table)
+    private defaultMuscleGroups = ["Glutes", "Legs", "Back", "Brists", "Shoulders", "Jogging", "Yoga"];
 
     // Get the folder name by month
     private getFileNameByMonth(date: Date): string {
@@ -31,7 +33,6 @@ export class HealthTrackerManager {
         const startMonth = startOfWeek.toLocaleDateString("en-GB", { month: "short" });
         const endMonth = endOfWeek.toLocaleDateString("en-GB", { month: "short" });
 
-        // Include month if week spans two months
         return startMonth === endMonth
             ? `${startDate} - ${endDate}.md`
             : `${startDate} ${startMonth} - ${endDate} ${endMonth}.md`;
@@ -68,6 +69,47 @@ export class HealthTrackerManager {
         }
     }
 
+    // New method: Extract muscle groups from the previous table
+    private async getPreviousMuscleGroups(currentDate: Date): Promise<string[]> {
+        const previousWeekStart = new Date(this.getStartOfWeek(currentDate));
+        previousWeekStart.setDate(previousWeekStart.getDate() - 7); // Switch to the previous week
+
+        const previousPath = this.getFilePathByDate(previousWeekStart);
+        const previousFile = this.app.vault.getAbstractFileByPath(previousPath) as TFile | null;
+
+        if (!previousFile) {
+            console.warn(`Previous week file not found: ${previousPath}. Using default muscle groups.`);
+            return this.defaultMuscleGroups;
+        }
+
+        try {
+            const content = await this.app.vault.read(previousFile);
+            const lines = content.split("\n");
+
+            // Find the start of the table (after "Daily Habits Track"))
+            const tableStart = lines.findIndex(line => line.includes("Daily Habits Track"));
+            if (tableStart === -1) {
+                return this.defaultMuscleGroups; // Fallback if the table is corrupted
+            }
+
+            const muscleGroups: string[] = [];
+            for (let i = tableStart + 1; i < lines.length && lines[i].startsWith("|"); i++) {
+                const cells = lines[i].split("|").map(cell => cell.trim());
+                if (cells.length < 2) continue;
+
+                const group = cells[1];
+                if (group) {
+                    muscleGroups.push(group); // Extract the muscle group from the second column
+                }
+            }
+
+            return muscleGroups.length > 0 ? muscleGroups : this.defaultMuscleGroups;
+        } catch (error) {
+            console.error(`Error parsing previous week file ${previousPath}:`, error);
+            return this.defaultMuscleGroups; // Fallback to default
+        }
+    }
+
     // Create a new weekly health tracker file if it doesn't exist
     async createWeeklyFile(): Promise<void> {
         const today = new Date();
@@ -76,7 +118,7 @@ export class HealthTrackerManager {
         let file = this.app.vault.getAbstractFileByPath(filePath) as TFile | null;
 
         if (file) {
-            return;
+            return; // File already exists, do nothing
         }
 
         // Ensure parent folders exist
@@ -96,7 +138,8 @@ export class HealthTrackerManager {
             });
         }
 
-        const muscleGroups = ["Glutes", "Legs", "Back", "Brists", "Shoulders", "Jogging", "Yoga"];
+        // Obtain a dynamic list of muscle groups from the previous week
+        const muscleGroups = await this.getPreviousMuscleGroups(today);
 
         // Build table content
         let content = `# Health Tracker - ${today.toLocaleDateString("en-GB")}\n\n`;
@@ -141,7 +184,9 @@ export class HealthTrackerManager {
             const content = await this.app.vault.read(file);
             const lines = content.split("\n");
             const daysOfWeek = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
-            const muscleGroups = ["Glutes", "Legs", "Back", "Brists", "Shoulders", "Jogging", "Yoga"];
+
+            // Dynamically extract muscle groups from the current table (for summary statistics)
+            const muscleGroups = await this.getPreviousMuscleGroups(new Date()); // Or parse from the current file
 
             // Find the table start (after "Daily Habits Track")
             const tableStart = lines.findIndex(line => line.includes("Daily Habits Track"));
