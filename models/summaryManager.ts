@@ -34,34 +34,20 @@ export class SummaryManager {
     /**
      * Main method for generating the summary
      */
-    async generateWeeklySummary(stats: { totalTasks: number, totalUnfinishedTasks: number, totalFinishedTasks: number }, date: Date, summaryPath: string = "Daily Planner/Summary.md"): Promise<void> {
+    async generateWeeklySummary(stats: { totalTasks: number, totalUnfinishedTasks: number, totalFinishedTasks: number, PrevWeekTotalFinishedTasks: number }, date: Date, summaryPath: string = "Daily Planner/Summary.md"): Promise<void> {
         try {
             const habitData = await this.readWeekFile(date);
             const chartYaml = this.generateChartYaml(habitData);
 
             await ensureFoldersExist(this.app, summaryPath);
 
-            const { totalTasks, totalUnfinishedTasks, totalFinishedTasks } = stats;
+            const { totalTasks, totalUnfinishedTasks, totalFinishedTasks, PrevWeekTotalFinishedTasks } = stats;
             const tasksPercent = totalTasks > 0 ? Math.round((totalFinishedTasks / totalTasks) * 100) : 0;
             const progressBlocks = Math.round(tasksPercent / 10);
             const progressBar = "█".repeat(progressBlocks) + "░".repeat(10 - progressBlocks);
 
             // Get week date range for the Health header
-            const HstartOfWeek = this.getStartOfWeek(date);
-            const HendOfWeek = new Date(HstartOfWeek);
-            HendOfWeek.setDate(HstartOfWeek.getDate() + 1);
-
-            const HstartDate = HstartOfWeek.getDate();
-            const HendDate = HendOfWeek.getDate();
-            const HstartMonth = HstartOfWeek.toLocaleDateString("en-GB", { month: "long" });
-            const HendMonth = HendOfWeek.toLocaleDateString("en-GB", { month: "long" });
-
-            const HweekRange = HstartMonth === HendMonth
-                ? `${HstartDate} - ${HendDate} ${HstartMonth}`
-                : `${HstartDate} ${HstartMonth} - ${HendDate} ${HendMonth}`;
-
-            // Get week date range for the Task header
-            const startOfWeek = this.getStartOfWeekSelfDev(date);
+            const startOfWeek = this.getStartOfWeek(date);
             const endOfWeek = new Date(startOfWeek);
             endOfWeek.setDate(startOfWeek.getDate() + 6);
 
@@ -74,7 +60,7 @@ export class SummaryManager {
                 ? `${startDate} - ${endDate} ${startMonth}`
                 : `${startDate} ${startMonth} - ${endDate} ${endMonth}`;
 
-            const summaryContent = `### 🏋️ Health Tracker Summary (📅 ${HweekRange})
+            const summaryContent = `### 🏋️ Health Tracker Summary (📅 ${weekRange})
 
 ${chartYaml}
 
@@ -87,7 +73,7 @@ ${progressBar} **${tasksPercent}%**
 📋 **Total Tasks:**  ${totalTasks}
 ✔ **Completed:**  ${totalFinishedTasks}
 ⏳ **Remaining:**  ${totalUnfinishedTasks}
-📊 **Average per day:**  ${(totalFinishedTasks / 7).toFixed(1)} tasks`;
+📊 **Average per day:**  ${(PrevWeekTotalFinishedTasks / 7).toFixed(1)} tasks`;
 
             await this.app.vault.adapter.write(normalizePath(summaryPath), summaryContent);
             console.log(`Summary generated at: ${summaryPath}`);
@@ -105,57 +91,96 @@ ${progressBar} **${tasksPercent}%**
         totalUnfinishedTasks: number;
         totalFinishedTasks: number;
         totalTasks: number;
+        prevWeekContent: string;
+        PrevWeekTotalFinishedTasks: number;
+        PrevWeekTotalUnfinishedTasks: number;
+        PrevWeekTotalTasks: number;
     }> {
         const yearName = this.getFileNameByYear(date);
-        const startOfWeek = this.getStartOfWeekSelfDev(date);
+        const startOfWeek = this.getStartOfWeek(date);
         const allUnfinishedTasks: string[] = [];
+        const PrevStartOfWeek = this.getStartOfWeekSelfDev(date);
+        const PrevAllUnfinishedTasks: string[] = [];
         let allContent = "";
         let totalUnfinishedTasks = 0;
         let totalFinishedTasks = 0;
         let totalTasks = 0;
+        let PrevWeekAllContent = "";
+        let PrevWeekTotalFinishedTasks = 0;
+        let PrevWeekTotalUnfinishedTasks = 0;
+        let PrevWeekTotalTasks = 0;
 
         for (let i = 0; i < 7; i++) {
             const current = new Date(startOfWeek);
             current.setDate(startOfWeek.getDate() + i);
-            const startDay = current.getDate();
-            const startMonth = current.toLocaleDateString("en-GB", { month: "long" });
+            const CurrentWeekStartDay = current.getDate();
+            const CurrentWeekStartMonth = current.toLocaleDateString("en-GB", { month: "long" });
 
-            const filePath = `Daily Planner/✅Tasks/${yearName}/📅 ${startMonth}/📅 ${startDay} ${startMonth}.md`;
-            const file = this.app.vault.getAbstractFileByPath(filePath);
+            const CurrentWeekfilePath = `Daily Planner/✅Tasks/${yearName}/📅 ${CurrentWeekStartMonth}/📅 ${CurrentWeekStartDay} ${CurrentWeekStartMonth}.md`;
+            const CurrentWeekfile = this.app.vault.getAbstractFileByPath(CurrentWeekfilePath);
 
-            if (!(file instanceof TFile)) {
-                console.warn(`Task file not found: ${filePath}`);
-                continue;
-            }
+            const prev = new Date(PrevStartOfWeek);
+            prev.setDate(PrevStartOfWeek.getDate() +i);
+            const PrevWeekStartDay = prev.getDate();
+            const PrevWeekStartMonth = prev.toLocaleDateString("en-GB", { month: "long" });
 
+            const PrevWeekfilePath = `Daily Planner/✅Tasks/${yearName}/📅 ${PrevWeekStartMonth}/📅 ${PrevWeekStartDay} ${PrevWeekStartMonth}.md`;
+
+            const PrevWeekfile = this.app.vault.getAbstractFileByPath(PrevWeekfilePath);
             try {
-                const content = await this.app.vault.read(file);
-                const unfinishedTasks = content
-                    .split('\n')
-                    .filter(line => line.trim().startsWith('- [') && !line.trim().startsWith('- [x]'))
-                    .map(line => line.trim());
-                totalUnfinishedTasks += unfinishedTasks.length;
+                if (CurrentWeekfile instanceof TFile) {
+                    const content = await this.app.vault.read(CurrentWeekfile);
+                    const unfinishedTasks = content
+                        .split('\n')
+                        .filter(line => line.trim().startsWith('- [') && !line.trim().startsWith('- [x]'))
+                        .map(line => line.trim());
+                    totalUnfinishedTasks += unfinishedTasks.length;
 
-                const finishedTasks = content
-                    .split('\n')
-                    .filter(line => line.trim().startsWith('- [x]'))
-                    .map(line => line.trim());
-                totalFinishedTasks += finishedTasks.length;
+                    const finishedTasks = content
+                        .split('\n')
+                        .filter(line => line.trim().startsWith('- [x]'))
+                        .map(line => line.trim());
+                    totalFinishedTasks += finishedTasks.length;
 
-                allUnfinishedTasks.push(...unfinishedTasks);
-                allContent += content + "\n";
+                    allUnfinishedTasks.push(...unfinishedTasks);
+                    allContent += content + "\n";
+                }
+
+                if (PrevWeekfile instanceof TFile) {
+                    const PrevContent = await this.app.vault.read(PrevWeekfile);
+                    const PrevUnfinishedTasks = PrevContent
+                        .split('\n')
+                        .filter(line => line.trim().startsWith('- [') && !line.trim().startsWith('- [x]'))
+                        .map(line => line.trim());
+                    PrevWeekTotalUnfinishedTasks += PrevUnfinishedTasks.length;
+
+                    const PrevFinishedTasks = PrevContent
+                        .split('\n')
+                        .filter(line => line.trim().startsWith('- [x]'))
+                        .map(line => line.trim());
+                    PrevWeekTotalFinishedTasks += PrevFinishedTasks.length;
+
+                    PrevAllUnfinishedTasks.push(...PrevAllUnfinishedTasks);
+                    PrevWeekAllContent += PrevContent + "\n";
+                }
+                    
             } catch (e) {
-                console.error(`Error reading file ${filePath}: ${e.message}`);
+                console.error(`Error reading file ${CurrentWeekfilePath}: ${e.message}`);
                 continue;
             }
         }
         totalTasks = totalFinishedTasks + totalUnfinishedTasks;
+        PrevWeekTotalTasks = PrevWeekTotalFinishedTasks + PrevWeekTotalUnfinishedTasks;
         return {
             tasks: allUnfinishedTasks,
             content: allContent.trim(),
             totalUnfinishedTasks,
             totalFinishedTasks,
-            totalTasks
+            totalTasks,
+            prevWeekContent:PrevWeekAllContent.trim(),
+            PrevWeekTotalFinishedTasks,
+            PrevWeekTotalUnfinishedTasks,
+            PrevWeekTotalTasks            
         };
     }
 
@@ -173,6 +198,7 @@ ${progressBar} **${tasksPercent}%**
         const weekName = this.getFileNameByWeek(date);
 
         const filePath = `Daily Planner/❤️Health Tracker/${monthName}/${weekName}`;
+        console.log(`filePath: ${filePath}`);
         const file = this.app.vault.getAbstractFileByPath(filePath);
 
         if (!(file instanceof TFile)) {
@@ -319,7 +345,7 @@ ${yamlLines.join("\n")}
      */
     private async getMuscleGroupsFromHealthTracker(date: Date): Promise<string[]> {
         const previousWeekStart = new Date(this.getStartOfWeek(date));
-        previousWeekStart.setDate(previousWeekStart.getDate() - 7); // Switch to the previous week
+        previousWeekStart.setDate(previousWeekStart.getDate()); // Switch to the previous week
 
         const previousPath = `Daily Planner/❤️Health Tracker/${this.getFileNameByMonth(previousWeekStart)}/${this.getFileNameByWeek(previousWeekStart)}`;
         const previousFile = this.app.vault.getAbstractFileByPath(normalizePath(previousPath)) as TFile | null;
