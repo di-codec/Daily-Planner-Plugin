@@ -83,24 +83,50 @@ export class SelfDevManager {
         }
     }
 
-    // Transfer incomplete tasks from yesterday to today
+    // Transfer incomplete tasks from the last existing file in current or previous months to today
     async migrateUnfinishedTasks(): Promise<void> {
         const today = new Date();
-        const yesterday = new Date();
-        yesterday.setDate(today.getDate() - 1);
-
-        const yesterdayFilePath = this.getFilePathByDate(yesterday);
         const todayFilePath = this.getFilePathByDate(today);
-
-        const yesterdayFile = this.app.vault.getAbstractFileByPath(yesterdayFilePath) as TFile | null;
         const todayFile = this.app.vault.getAbstractFileByPath(todayFilePath) as TFile | null;
 
-        if (!(yesterdayFile instanceof TFile)) {
-            new Notice("File from yesterday doesn't exists.");
+        // Get the year folder path
+        const yearName = this.getFileNameByYear(today);
+        const yearFolderPath = `${this.settings.mainFileDirectory}/${this.settings.taskFileDirectory}/${yearName}`;
+        
+        const yearFolder = this.app.vault.getAbstractFileByPath(yearFolderPath);
+        if (!yearFolder || !(yearFolder as any).children) {
+            new Notice("No year folder found.");
+            console.log(`No year folder found: ${yearFolderPath}`);
             return;
         }
 
-        const content = await this.app.vault.read(yesterdayFile);
+        // Get all month folders and sort them by name (which includes month order)
+        const monthFolders = (yearFolder as any).children
+            .filter((folder: any) => folder.children && folder.name.startsWith('📅'))
+            .sort((a: any, b: any) => b.name.localeCompare(a.name)); // Sort descending to check recent months first
+
+        let lastFile: TFile | null = null;
+
+        // Search through month folders from most recent to oldest
+        for (const monthFolder of monthFolders) {
+            const files = monthFolder.children
+                .filter((file: any) => file instanceof TFile && file.path !== todayFilePath)
+                .sort((a: TFile, b: TFile) => b.stat.mtime - a.stat.mtime);
+
+            if (files.length > 0) {
+                lastFile = files[0] as TFile;
+                console.log(`Last file found: ${lastFile.name} in ${monthFolder.name}`);
+                break;
+            }
+        }
+
+        if (!lastFile) {
+            new Notice("No previous files found to migrate tasks from.");
+            console.log(`No previous files found in any month folder`);
+            return;
+        }
+
+        const content = await this.app.vault.read(lastFile);
         const unfinishedTasks = content
             .split('\n')
             .filter(line => line.trim().startsWith('- [') && !line.trim().startsWith('- [x]'))
@@ -117,6 +143,6 @@ export class SelfDevManager {
 
         const file = this.app.vault.getAbstractFileByPath(todayFilePath) as TFile;
         await this.app.vault.append(file, unfinishedTasks.join('\n') + '\n');
-        new Notice(`Transfared ${unfinishedTasks.length} tasks from file ${this.getFileNameByDate(yesterday)}!`);
+        new Notice(`Transferred ${unfinishedTasks.length} tasks from file ${lastFile.name}!`);
     }
 }
