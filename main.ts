@@ -122,7 +122,7 @@ export default class MyPlugin extends Plugin {
                     if (!content.includes(migrationMarker)){
                         try{
                             await this.selfDevManager.migrateUnfinishedTasks();
-                            await this.app.vault.append(todayFile,`-----------------\n${migrationMarker}`);
+                            await this.app.vault.append(todayFile,`- [ ] \n-----------------\n${migrationMarker}`);
                             new Notice (`Transferred unfinished tasks for today!`);
                         } catch (error) {
                             new Notice (`Error mimgrating tasks: ${error.message}`);
