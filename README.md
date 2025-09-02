@@ -35,9 +35,18 @@ The plugin uses Obsidian's markdown features for checklists and custom code bloc
 Screenshots of example outputs:
 
 - **Health Tracker Summary:** A stacked bar chart showing completed habits per day.
+<img width="1511" height="854" alt="image" src="https://github.com/user-attachments/assets/86ec4d8d-5904-4473-93b3-da925d407009" />
+
 - **Task Summary:** Progress bar and stats for completed tasks.
+<img width="1524" height="604" alt="image" src="https://github.com/user-attachments/assets/76adc6b1-b3e1-4c70-8ab5-0dd562f8ac01" />
+
+
 - **Health Tracker Table:** Weekly grid with checkboxes for habits.
+<img width="1608" height="1049" alt="image" src="https://github.com/user-attachments/assets/9f290733-fb50-43e0-a2df-fa0c25108623" />
+
 - **Tasks List:** Daily checklist of tasks.
+<img width="1782" height="1049" alt="image" src="https://github.com/user-attachments/assets/42fff976-889e-47e5-aa02-eb348cabd62c" />
+
 
 ## Features
 
