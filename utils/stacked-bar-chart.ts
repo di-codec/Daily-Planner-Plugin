@@ -57,7 +57,6 @@ export class TableChart {
                         y: {
                             stacked: true,
                             beginAtZero: true,
-                            max: 7,
                             title: { display: true, text: "Number of Exercises" }
                         }
                     }
