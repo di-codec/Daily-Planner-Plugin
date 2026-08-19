@@ -343,6 +343,15 @@ export class DailyNoteManager {
 	}
 
 	private async readFrontmatter(file: TFile): Promise<DailyFrontmatter> {
+		const content = await this.app.vault.read(file);
+		const split = splitNote(content);
+		if (split.yaml !== null) {
+			const parsed = parseYaml(split.yaml) ?? {};
+			return {
+				habits: normalizeHabits((parsed as Record<string, unknown>)["habits"]),
+				schedule: normalizeSchedule((parsed as Record<string, unknown>)["schedule"]),
+			};
+		}
 		const cache = this.app.metadataCache.getFileCache(file);
 		if (cache?.frontmatter) {
 			return {
@@ -350,16 +359,7 @@ export class DailyNoteManager {
 				schedule: normalizeSchedule(cache.frontmatter["schedule"]),
 			};
 		}
-		const content = await this.app.vault.read(file);
-		const split = splitNote(content);
-		if (split.yaml === null) {
-			return { habits: defaultHabits(), schedule: [] };
-		}
-		const parsed = parseYaml(split.yaml) ?? {};
-		return {
-			habits: normalizeHabits((parsed as Record<string, unknown>)["habits"]),
-			schedule: normalizeSchedule((parsed as Record<string, unknown>)["schedule"]),
-		};
+		return { habits: defaultHabits(), schedule: [] };
 	}
 
 	private async readBody(file: TFile): Promise<string> {

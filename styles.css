@@ -39,3 +39,229 @@
   button:hover {
     background: var(--interactive-accent-hover);
   }
+
+.daily-planner-modal {
+	width: min(720px, 96vw);
+	max-width: 720px;
+}
+
+.daily-planner-modal .modal-content {
+	max-height: 82vh;
+	overflow: auto;
+}
+
+.dp-modal-body {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	padding-bottom: 4px;
+}
+
+.dp-calendar-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	margin-bottom: 8px;
+}
+
+.dp-calendar-title {
+	font-weight: 600;
+	font-size: 1.05em;
+	text-transform: capitalize;
+}
+
+.dp-icon-btn {
+	width: 32px;
+	height: 32px;
+	margin: 0;
+	padding: 0;
+	font-size: 1.2em;
+	line-height: 1;
+}
+
+.dp-calendar-grid {
+	display: grid;
+	grid-template-columns: repeat(7, 1fr);
+	gap: 4px;
+}
+
+.dp-weekday {
+	text-align: center;
+	font-size: 0.75em;
+	color: var(--text-muted);
+	padding: 4px 0;
+}
+
+.dp-day {
+	position: relative;
+	aspect-ratio: 1;
+	min-height: 36px;
+	margin: 0;
+	padding: 0;
+	border: none;
+	border-radius: 8px;
+	background: var(--background-secondary);
+	color: var(--text-normal);
+	cursor: pointer;
+}
+
+.dp-day.is-empty {
+	background: transparent;
+	cursor: default;
+	pointer-events: none;
+}
+
+.dp-day.is-today {
+	box-shadow: inset 0 0 0 2px var(--interactive-accent);
+}
+
+.dp-day.is-selected {
+	background: var(--interactive-accent);
+	color: var(--text-on-accent);
+}
+
+.dp-day.has-note .dp-day-dot {
+	position: absolute;
+	left: 50%;
+	bottom: 5px;
+	width: 5px;
+	height: 5px;
+	margin-left: -2.5px;
+	border-radius: 50%;
+	background: var(--interactive-accent);
+}
+
+.dp-day.is-selected.has-note .dp-day-dot {
+	background: var(--text-on-accent);
+}
+
+.dp-day-plan h3,
+.dp-week-tracker h3 {
+	margin: 0 0 8px;
+	font-size: 1.05em;
+}
+
+.dp-day-plan h4 {
+	margin: 0 0 6px;
+	color: var(--text-muted);
+	font-size: 0.85em;
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+}
+
+.dp-block {
+	background: var(--background-secondary);
+	border-radius: 8px;
+	padding: 10px;
+	margin-bottom: 10px;
+}
+
+.dp-empty {
+	color: var(--text-muted);
+	font-size: 0.9em;
+	padding: 4px 0;
+}
+
+.dp-check-row,
+.dp-schedule-row {
+	display: flex;
+	align-items: center;
+	gap: 8px;
+	padding: 4px 0;
+}
+
+.dp-check-row input[type="checkbox"] {
+	margin: 0;
+}
+
+.dp-inline-form {
+	display: flex;
+	align-items: center;
+	gap: 6px;
+	margin-top: 8px;
+}
+
+.dp-flex-input {
+	flex: 1;
+	margin: 0;
+	min-width: 0;
+}
+
+.dp-time-input {
+	margin: 0;
+	width: 110px;
+}
+
+.dp-inline-form button {
+	margin: 0;
+	white-space: nowrap;
+}
+
+.dp-week-tracker {
+	position: sticky;
+	bottom: 0;
+	margin-top: 4px;
+	padding-top: 10px;
+	border-top: 1px solid var(--background-modifier-border);
+	background: var(--background-primary);
+}
+
+.dp-week-range,
+.dp-progress {
+	color: var(--text-muted);
+	font-size: 0.9em;
+	margin-bottom: 8px;
+}
+
+.dp-progress {
+	font-variant-numeric: tabular-nums;
+	letter-spacing: 0.02em;
+}
+
+.dp-week-table {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.dp-week-row {
+	display: grid;
+	grid-template-columns: minmax(72px, 1.4fr) repeat(7, 1fr);
+	align-items: center;
+	gap: 2px;
+}
+
+.dp-week-row.is-head {
+	color: var(--text-muted);
+	font-size: 0.75em;
+}
+
+.dp-week-habit-name {
+	font-size: 0.9em;
+	padding-right: 6px;
+	text-transform: capitalize;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.dp-week-day-head {
+	text-align: center;
+	line-height: 1.2;
+}
+
+.dp-week-day-num {
+	font-weight: 600;
+	color: var(--text-normal);
+}
+
+.dp-week-check {
+	display: flex;
+	justify-content: center;
+	margin: 0;
+}
+
+.dp-week-check input[type="checkbox"] {
+	margin: 0;
+}

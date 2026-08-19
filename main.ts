@@ -2,6 +2,7 @@ import { Notice, Plugin } from "obsidian";
 import { DailyNoteManager } from "./models/dailyNoteModel";
 import { SummaryManager } from "./models/summaryManager";
 import { TableChart } from "./utils/stacked-bar-chart";
+import { PlannerModal } from "./views/PlannerModal";
 
 export default class DailyPlannerPlugin extends Plugin {
 	private dailyNotes: DailyNoteManager;
@@ -53,11 +54,16 @@ export default class DailyPlannerPlugin extends Plugin {
 			},
 		});
 
-		this.addRibbonIcon("calendar-with-checkmark", "Daily Planner", async () => {
-			const today = new Date();
-			const file = await this.dailyNotes.getOrCreateDailyNote(today);
-			const tasks = await this.dailyNotes.getTasks(today);
-			new Notice(`${file.basename}: ${tasks.length} tasks`);
+		this.addCommand({
+			id: "open-daily-planner",
+			name: "Open Daily Planner",
+			callback: () => {
+				new PlannerModal(this.app, this.dailyNotes).open();
+			},
+		});
+
+		this.addRibbonIcon("calendar-with-checkmark", "Ежедневник", () => {
+			new PlannerModal(this.app, this.dailyNotes).open();
 		});
 	}
 
