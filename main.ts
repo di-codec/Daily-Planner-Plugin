@@ -1,180 +1,67 @@
-// main.ts
-import { Notice, Plugin, addIcon, TAbstractFile, TFolder, TFile, WorkspaceLeaf, ItemView } from 'obsidian';
-import { SelfDevManager } from './models/selfDevModel';
-import { HealthTrackerManager } from "./models/healthTrackerModel";
+import { Notice, Plugin } from "obsidian";
+import { DailyNoteManager } from "./models/dailyNoteModel";
 import { SummaryManager } from "./models/summaryManager";
-import {TableChart } from './utils/stacked-bar-chart';
-import { PassThrough } from 'stream';
+import { TableChart } from "./utils/stacked-bar-chart";
 
+export default class DailyPlannerPlugin extends Plugin {
+	private dailyNotes: DailyNoteManager;
+	private summaryManager: SummaryManager;
+	private chart: TableChart;
 
-export default class MyPlugin extends Plugin {
-    private selfDevManager: SelfDevManager;
-    private healthTrackerManager: HealthTrackerManager;
-    private summaryManager: SummaryManager;
-    private chart: TableChart;
+	async onload() {
+		console.log("loading plugin 🚀");
 
-    async onload() {
+		this.dailyNotes = new DailyNoteManager(this.app);
+		this.summaryManager = new SummaryManager(this.app, this.dailyNotes);
+		this.chart = new TableChart();
 
-        console.log('loading plugin 🚀');
+		this.registerMarkdownCodeBlockProcessor("stacked-bar-chart", (source, el) => {
+			this.chart.renderChart(source, el);
+		});
 
-        addIcon('circle', '<circle cx="50" cy="50" r="50" fill="currentColor"/>');
+		this.addCommand({
+			id: "add-task",
+			name: "Add Task",
+			callback: async () => {
+				const today = new Date();
+				await this.dailyNotes.getOrCreateDailyNote(today);
+				const tasks = await this.dailyNotes.getTasks(today);
+				new Notice(`Today tasks: ${tasks.length > 0 ? tasks.map((t) => t.text).join(", ") : "no tasks"}`);
+			},
+		});
 
-        // Initialize SummaryManager
-        this.summaryManager = new SummaryManager(this.app);
+		// Weekly markdown tables are gone — habits live in each daily note.
+		// Keep the command id so existing hotkeys still work; it now refreshes Summary.md.
+		this.addCommand({
+			id: "track health",
+			name: "Create Weekly Health Tracker",
+			callback: async () => {
+				const today = new Date();
+				const week = await this.dailyNotes.getWeekSummary(today);
+				await this.summaryManager.generateWeeklySummary(today);
+				new Notice(
+					`Week: ${week.tasksCompleted}/${week.tasksTotal} tasks, ${Object.keys(week.habits).length} habits. Summary.md updated.`,
+				);
+			},
+		});
 
-        //================== Chart TEST ==========================
-        
-        this.chart = new TableChart()
-        // Register the code block
-        this.registerMarkdownCodeBlockProcessor("stacked-bar-chart", (source, el) => {
-            this.chart.renderChart(source, el);
-        });
+		this.addCommand({
+			id: "migrate-legacy-daily-planner",
+			name: "Migrate legacy Daily Planner notes",
+			callback: async () => {
+				await this.dailyNotes.migrateLegacyData();
+			},
+		});
 
-        // Command for auto-creating a file
-        this.addCommand({
-            id: "create-stacked-bar-chart-file",
-            name: "📊 Create Chart File",
-        });
-        //============================================
+		this.addRibbonIcon("calendar-with-checkmark", "Daily Planner", async () => {
+			const today = new Date();
+			const file = await this.dailyNotes.getOrCreateDailyNote(today);
+			const tasks = await this.dailyNotes.getTasks(today);
+			new Notice(`${file.basename}: ${tasks.length} tasks`);
+		});
+	}
 
-
-        this.selfDevManager = new SelfDevManager(this.app, {
-            mainFileDirectory: "Daily Planner",
-            taskFileDirectory: "✅Tasks" 
-        });
-
-        // Adding tasks command
-        this.addCommand({
-        id: 'add-task',
-        name: 'Add Task',
-        callback: async () => {
-            await this.selfDevManager.createDailyFile();
-            const tasks = await this.selfDevManager.getTodayTasks();
-            new Notice(`Today tasks: ${tasks.length > 0 ? tasks.join(', ') : 'no tasks'}`);
-        }
-        });
-
-        this.healthTrackerManager = new HealthTrackerManager(this.app, {
-            mainFileDirectory: "Daily Planner",
-            healthTrackerFileDirectory: "❤️Health Tracker"
-        });
-
-        // Adding Health Tracker command
-        this.addCommand({
-            id: 'track health',
-            name: 'Create Weekly Health Tracker',
-            callback: async () => {
-                await this.healthTrackerManager.createWeeklyFile();
-                const tasks = await this.healthTrackerManager.getThisWeekSummary();
-                new Notice(`Health Tracker created: ${tasks.length > 0 ? tasks.join(', ') : 'No content'}`);
-            }
-        });
-
-        // Structure and tasks manager creation through 2ribbon icon"
-        this.addRibbonIcon('circle', 'Manager', async () => {
-            const folderPath = "Daily Planner";
-            const folderSelfDevPath = "✅Tasks";
-            const folderHealthTrackerPath = "❤️Health Tracker";
-            const filePathSelfDev = `${folderPath}/${folderSelfDevPath}`;
-            const folderPathHealth = `${folderPath}/${folderHealthTrackerPath}`;
-            // Summary file
-            const summaryFilePath = `${folderPath}/Summary.md`;
-
-            // Folder checking and creation
-            let folder = this.app.vault.getAbstractFileByPath(folderPath);
-            if (!folder) {
-                console.log('Creating folder:', folderPath);
-                await this.app.vault.createFolder(folderPath);
-                new Notice('Directory "Daily Planner" created!');
-                folder = this.app.vault.getAbstractFileByPath(folderPath);
-            }
-
-            //=================== TASKS ====================================
-
-            // Creatin "Tasks" Folder
-            if (!this.app.vault.getAbstractFileByPath(`${folderPath}/${folderSelfDevPath}`)) {
-                console.log(`Creating inside directory 'Tasks': ${folderSelfDevPath}`);
-                await this.app.vault.createFolder(`${folderPath}/${folderSelfDevPath}`);
-                new Notice('Inside directory "✅Tasks" created!');
-            }
-
-            // Checking and Creation "Tasks" folder
-            let fileSelfDev = this.app.vault.getAbstractFileByPath(filePathSelfDev);
-            if (!fileSelfDev) {
-                console.log('✅ Creating file:', filePathSelfDev);
-                fileSelfDev = await this.app.vault.createFolder(filePathSelfDev);
-                new Notice('✅ Direction "✅Tasks" created!');
-            }
-
-            if (fileSelfDev instanceof TFolder) {
-                await this.selfDevManager.createDailyFile(); // Creating the section for today
-                const tasks = await this.selfDevManager.getTodayTasks();
-
-                // Checking if tasks have been transferred today 
-                const today = new Date().toLocaleDateString("en-GB");
-                
-                const todayFilePath = this.selfDevManager.getFilePathByDate(new Date());
-                const todayFile = this.app.vault.getAbstractFileByPath(todayFilePath) as TFile;
-
-                if (todayFile) {
-                    let content = await this.app.vault.read(todayFile);
-                    const migrationMarker = `Migrated: ${today}\n`;
-                    if (!content.includes(migrationMarker)){
-                        try{
-                            await this.selfDevManager.migrateUnfinishedTasks();
-                            await this.app.vault.append(todayFile,`- [ ] \n-----------------\n${migrationMarker}`);
-                            new Notice (`Transferred unfinished tasks for today!`);
-                        } catch (error) {
-                            new Notice (`Error mimgrating tasks: ${error.message}`);
-                        }
-                    } else{
-                        PassThrough
-                    }
-                }
-            }
-
-            // ================= HEALTH TRACKER ================================
-
-            // Creating "Health Tracker" Folder 
-            if (!this.app.vault.getAbstractFileByPath(`${folderPath}/${folderHealthTrackerPath}`)) {
-                await this.app.vault.createFolder(`${folderPath}/${folderHealthTrackerPath}`);
-                new Notice('Inside directory "❤️Health Tracker" created!');
-            }
-
-            // Checking and Create "Health Tracker" folder
-            let filePathHealthTracker = this.app.vault.getAbstractFileByPath(folderPathHealth);
-            if (!filePathHealthTracker) {
-                filePathHealthTracker = await this.app.vault.createFolder(folderPathHealth);
-                new Notice('✅ Direction "❤️Health Tracker" created!');
-            }
-
-            if (filePathHealthTracker instanceof TFolder) {
-                await this.healthTrackerManager.createWeeklyFile();
-                const summary =  await this.healthTrackerManager.getThisWeekSummary();
-                new Notice (`${summary}`);
-                // Generate summary after creating the tracker
-                const dailyTasks = await this.summaryManager.readDailyTasksFile(new Date());
-                await this.summaryManager.generateWeeklySummary(dailyTasks, new Date(), "Daily Planner/Summary.md");
-            }
-
-            // Create or update Summary.md
-            let summaryFile = this.app.vault.getAbstractFileByPath(summaryFilePath) as TFile | null;
-            if (!summaryFile) {
-                await this.app.vault.create(summaryFilePath, "# Summary\n\nInitial summary content.");
-                new Notice('Summary.md created!');
-            }
-        });
-       
-        //================== SUMMARY =========================
-
-        // SummaryManager Initialization
-        const summaryManager = new SummaryManager(this.app);
-        const dailyTasks = await summaryManager.readDailyTasksFile(new Date());
-        await summaryManager.generateWeeklySummary(dailyTasks, new Date(), "Daily Planner/Summary.md");
-    }
-
-    async onunload() {
-        console.log('unloading plugin ⛔');
-    }
+	async onunload() {
+		console.log("unloading plugin ⛔");
+	}
 }
-
