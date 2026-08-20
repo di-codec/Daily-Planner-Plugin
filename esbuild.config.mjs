@@ -43,7 +43,6 @@ async function buildPlugin() {
 	});
 
 	console.log(`🚀 ${prod ? 'Production' : 'Development'} build`)
-	console.log(`📤 Output directory: ${NaN}`)
 
 	if (prod) {
 		await context.rebuild();

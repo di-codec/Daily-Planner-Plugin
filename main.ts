@@ -1,20 +1,60 @@
-import { Notice, Plugin } from "obsidian";
-import { DailyNoteManager } from "./models/dailyNoteModel";
-import { SummaryManager } from "./models/summaryManager";
-import { TableChart } from "./utils/stacked-bar-chart";
-import { PlannerModal } from "./views/PlannerModal";
+import { Notice, Plugin, WorkspaceLeaf } from "obsidian";
+import { DEFAULT_HABITS, DEFAULT_HABITS_SECTION_TITLE, DEFAULT_ROOT_FOLDER } from "./src/core/constants";
+import { normalizeHabitNames } from "./src/core/habits";
+import { dailyFolderExcludePattern } from "./src/core/paths";
+import { addExcludePattern, removeExcludePattern, replaceExcludePattern } from "./src/obsidian/excludedFiles";
+import { DailyNoteRepository } from "./src/obsidian/dailyNoteRepository";
+import { DailyPlannerSettingTab, DEFAULT_SETTINGS, DailyPlannerSettings } from "./src/obsidian/settings";
+import { TableChart } from "./src/obsidian/stackedBarChart";
+import { LayoutSettingsAccess, PlannerView, VIEW_TYPE_PLANNER } from "./src/obsidian/views/PlannerView";
+import { TextPromptModal } from "./src/obsidian/views/TextPromptModal";
+import { HabitSettingsAccess } from "./src/obsidian/views/weekTrackerView";
+
+const WIDE_LAYOUT_BREAKPOINT_PX = 900;
 
 export default class DailyPlannerPlugin extends Plugin {
-	private dailyNotes: DailyNoteManager;
-	private summaryManager: SummaryManager;
-	private chart: TableChart;
+	settings!: DailyPlannerSettings;
+	private dailyNotes!: DailyNoteRepository;
+	private chart!: TableChart;
+	private habitSettings!: HabitSettingsAccess;
+	private layoutSettings!: LayoutSettingsAccess;
 
 	async onload() {
-		console.log("loading plugin 🚀");
-
-		this.dailyNotes = new DailyNoteManager(this.app);
-		this.summaryManager = new SummaryManager(this.app, this.dailyNotes);
+		await this.loadSettings();
+		this.dailyNotes = new DailyNoteRepository(
+			this.app,
+			() => this.settings.habits,
+			() => this.settings.rootFolder,
+			() => this.settings.habitsSectionTitle,
+		);
+		this.habitSettings = {
+			getHabits: () => this.settings.habits,
+			getHabitsSectionTitle: () => this.settings.habitsSectionTitle,
+			saveHabits: async (habits) => {
+				this.settings.habits = habits;
+				await this.saveSettings();
+			},
+			saveHabitsSectionTitle: async (title) => {
+				this.settings.habitsSectionTitle = title;
+				await this.saveSettings();
+			},
+		};
+		this.layoutSettings = {
+			getSplitTopHeight: () => this.settings.splitTopHeight,
+			saveSplitTopHeight: async (px) => {
+				this.settings.splitTopHeight = px;
+				await this.saveSettings();
+			},
+		};
+		await this.syncDailyFolderExclusion();
+		await this.saveSettings();
 		this.chart = new TableChart();
+		this.addSettingTab(new DailyPlannerSettingTab(this.app, this));
+
+		this.registerView(
+			VIEW_TYPE_PLANNER,
+			(leaf) => new PlannerView(leaf, this.dailyNotes, this.habitSettings, this.layoutSettings),
+		);
 
 		this.registerMarkdownCodeBlockProcessor("stacked-bar-chart", (source, el) => {
 			this.chart.renderChart(source, el);
@@ -22,27 +62,12 @@ export default class DailyPlannerPlugin extends Plugin {
 
 		this.addCommand({
 			id: "add-task",
-			name: "Add Task",
-			callback: async () => {
-				const today = new Date();
-				await this.dailyNotes.getOrCreateDailyNote(today);
-				const tasks = await this.dailyNotes.getTasks(today);
-				new Notice(`Today tasks: ${tasks.length > 0 ? tasks.map((t) => t.text).join(", ") : "no tasks"}`);
-			},
-		});
-
-		// Weekly markdown tables are gone — habits live in each daily note.
-		// Keep the command id so existing hotkeys still work; it now refreshes Summary.md.
-		this.addCommand({
-			id: "track health",
-			name: "Create Weekly Health Tracker",
-			callback: async () => {
-				const today = new Date();
-				const week = await this.dailyNotes.getWeekSummary(today);
-				await this.summaryManager.generateWeeklySummary(today);
-				new Notice(
-					`Week: ${week.tasksCompleted}/${week.tasksTotal} tasks, ${Object.keys(week.habits).length} habits. Summary.md updated.`,
-				);
+			name: "Add task for today",
+			callback: () => {
+				new TextPromptModal(this.app, "Add Task", "Task text", async (text) => {
+					await this.dailyNotes.addTask(new Date(), text);
+					new Notice(`Task added: ${text}`);
+				}).open();
 			},
 		});
 
@@ -54,20 +79,81 @@ export default class DailyPlannerPlugin extends Plugin {
 			},
 		});
 
-		this.addCommand({
-			id: "open-daily-planner",
-			name: "Open Daily Planner",
-			callback: () => {
-				new PlannerModal(this.app, this.dailyNotes).open();
-			},
-		});
-
-		this.addRibbonIcon("calendar-with-checkmark", "Ежедневник", () => {
-			new PlannerModal(this.app, this.dailyNotes).open();
+		this.addRibbonIcon("calendar-with-checkmark", "Daily Planner", () => {
+			void this.activatePlannerView();
 		});
 	}
 
 	async onunload() {
-		console.log("unloading plugin ⛔");
+		await this.dailyNotes.flushAll();
+	}
+
+	/** Reuses an already-open planner leaf if there is one; otherwise opens a new split (right if wide, bottom if narrow). */
+	private async activatePlannerView(): Promise<void> {
+		const { workspace } = this.app;
+		const existing = workspace.getLeavesOfType(VIEW_TYPE_PLANNER);
+		if (existing.length > 0) {
+			await workspace.revealLeaf(existing[0]);
+			return;
+		}
+
+		const isWide = workspace.containerEl.clientWidth > WIDE_LAYOUT_BREAKPOINT_PX;
+		const leaf: WorkspaceLeaf = workspace.getLeaf("split", isWide ? "vertical" : "horizontal");
+		await leaf.setViewState({ type: VIEW_TYPE_PLANNER, active: true });
+		await workspace.revealLeaf(leaf);
+	}
+
+	/**
+	 * Reconciles Obsidian's global Excluded files list against `hideDailyFolder`.
+	 * Called on every load (so a pattern manually removed from Excluded files, or
+	 * a reinstall with `data.json` intact, self-heals) and whenever the toggle or
+	 * root folder changes from the settings tab. Tracking `lastAppliedExcludePattern`
+	 * (rather than always deriving it fresh from the current root folder) is what
+	 * lets this also clean up a *stale* entry from a previous root folder name -
+	 * without it, a rootFolder change that bypassed this method (e.g. a hand-edited
+	 * data.json) would leave an orphaned pattern in the list forever, since nothing
+	 * would know an old value ever existed to remove.
+	 *
+	 * Returns false only when the underlying (undocumented) Obsidian API isn't
+	 * available and something was supposed to change - callers show a Notice.
+	 */
+	async syncDailyFolderExclusion(): Promise<boolean> {
+		const previousPattern = this.settings.lastAppliedExcludePattern;
+
+		if (!this.settings.hideDailyFolder) {
+			if (!previousPattern) {
+				return true;
+			}
+			const removed = removeExcludePattern(this.app, previousPattern);
+			if (removed) {
+				this.settings.lastAppliedExcludePattern = null;
+			}
+			return removed;
+		}
+
+		const currentPattern = dailyFolderExcludePattern(this.settings.rootFolder);
+		const applied =
+			previousPattern && previousPattern !== currentPattern
+				? replaceExcludePattern(this.app, previousPattern, currentPattern)
+				: addExcludePattern(this.app, currentPattern);
+		if (applied) {
+			this.settings.lastAppliedExcludePattern = currentPattern;
+		}
+		return applied;
+	}
+
+	async loadSettings() {
+		const loaded = (await this.loadData()) as Partial<DailyPlannerSettings> | null;
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, loaded ?? {});
+		this.settings.habits = normalizeHabitNames(this.settings.habits);
+		if (this.settings.habits.length === 0) {
+			this.settings.habits = [...DEFAULT_HABITS];
+		}
+		this.settings.rootFolder = this.settings.rootFolder.trim() || DEFAULT_ROOT_FOLDER;
+		this.settings.habitsSectionTitle = this.settings.habitsSectionTitle.trim() || DEFAULT_HABITS_SECTION_TITLE;
+	}
+
+	async saveSettings() {
+		await this.saveData(this.settings);
 	}
 }

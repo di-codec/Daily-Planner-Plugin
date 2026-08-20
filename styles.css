@@ -1,60 +1,68 @@
-.daily-planner-container {
-    padding: 10px;
-    font-family: var(--font-family-editor);
-  }
-  
-  .daily-planner-container h4,
-  .daily-planner-container h5 {
-    color: var(--text-accent);
-    margin-bottom: 10px;
-  }
-  
-  .section {
-    margin-bottom: 20px;
-  }
-  
-  .task-list,
-  .workout-list,
-  .job-list {
-    background: var(--background-secondary);
-    padding: 10px;
-    border-radius: 5px;
-  }
-  
-  input,
-  select,
-  button {
-    margin: 5px;
-    padding: 5px;
-    border: 1px solid var(--background-modifier-border);
-    border-radius: 3px;
-  }
-  
-  button {
-    background: var(--interactive-accent);
-    color: var(--text-on-accent);
-    cursor: pointer;
-  }
-  
-  button:hover {
-    background: var(--interactive-accent-hover);
-  }
-
-.daily-planner-modal {
-	width: min(720px, 96vw);
-	max-width: 720px;
-}
-
-.daily-planner-modal .modal-content {
-	max-height: 82vh;
-	overflow: auto;
+/* ItemView container - fills whatever leaf Obsidian gives it (docked sidebar,
+   split pane, or a popped-out window), not a fixed-size dialog box. */
+.daily-planner-view {
+	height: 100%;
+	overflow-y: auto;
+	padding: var(--size-4-4, 16px);
 }
 
 .dp-modal-body {
 	display: flex;
 	flex-direction: column;
-	gap: 16px;
+	gap: 4px;
 	padding-bottom: 4px;
+	/* At least fill the panel (so the week tracker below has real leftover space
+	   to flex into), but allowed to grow taller than that - .daily-planner-view's
+	   own overflow-y is the fallback if the two zones' min-heights genuinely don't
+	   both fit. */
+	min-height: 100%;
+}
+
+.dp-top-zone {
+	display: flex;
+	flex-direction: column;
+	gap: 22px;
+	/* Natural content size by default (no inline height set) until the user drags
+	   the handle below at least once - see PlannerView.applyTopZoneHeight. Once
+	   customized, this becomes an explicit px height, scrollable on its own if the
+	   user has shrunk it below its content's natural size. */
+	flex: 0 0 auto;
+	min-height: 120px;
+	overflow-y: auto;
+}
+
+.dp-calendar,
+.dp-day-plan {
+	/* Never shrunk by the flex column above - .dp-top-zone's own overflow-y
+	   handles the case where the user has dragged it shorter than this content. */
+	flex: 0 0 auto;
+}
+
+.dp-resize-handle {
+	flex: 0 0 auto;
+	position: relative;
+	height: 10px;
+	margin: -3px 0;
+	cursor: row-resize;
+	z-index: 1;
+}
+
+.dp-resize-handle::before {
+	content: "";
+	position: absolute;
+	left: 50%;
+	top: 50%;
+	transform: translate(-50%, -50%);
+	width: 36px;
+	height: 3px;
+	border-radius: 2px;
+	background: var(--background-modifier-border);
+	transition: background-color 0.15s ease;
+}
+
+.dp-resize-handle:hover::before,
+.dp-resize-handle.is-dragging::before {
+	background: var(--interactive-accent);
 }
 
 .dp-calendar-header {
@@ -62,7 +70,7 @@
 	align-items: center;
 	justify-content: space-between;
 	gap: 8px;
-	margin-bottom: 8px;
+	margin-bottom: 10px;
 }
 
 .dp-calendar-title {
@@ -82,7 +90,12 @@
 
 .dp-calendar-grid {
 	display: grid;
-	grid-template-columns: repeat(7, 1fr);
+	grid-template-columns: repeat(7, minmax(0, 1fr));
+	/* Fixed row height (not aspect-ratio/content-based auto sizing): a real day is a
+	   <button>, an empty leading cell is a <div> - UA default button chrome can make
+	   the two compute slightly different natural heights, which showed up as row 1
+	   (mostly empty divs) rendering shorter than the all-button rows below it. */
+	grid-auto-rows: 40px;
 	gap: 4px;
 }
 
@@ -95,15 +108,20 @@
 
 .dp-day {
 	position: relative;
-	aspect-ratio: 1;
-	min-height: 36px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 100%;
+	height: 100%;
 	margin: 0;
 	padding: 0;
 	border: none;
-	border-radius: 8px;
+	border-radius: var(--radius-s, 6px);
 	background: var(--background-secondary);
 	color: var(--text-normal);
+	font: inherit;
 	cursor: pointer;
+	transition: background-color 0.15s ease, box-shadow 0.15s ease, filter 0.1s ease;
 }
 
 .dp-day.is-empty {
@@ -112,13 +130,19 @@
 	pointer-events: none;
 }
 
+.dp-day:hover:not(.is-empty):not(.is-selected) {
+	filter: brightness(1.18);
+}
+
 .dp-day.is-today {
-	box-shadow: inset 0 0 0 2px var(--interactive-accent);
+	box-shadow: inset 0 0 0 1.5px var(--interactive-accent);
 }
 
 .dp-day.is-selected {
 	background: var(--interactive-accent);
 	color: var(--text-on-accent);
+	border-radius: var(--radius-m, 8px);
+	font-weight: 600;
 }
 
 .dp-day.has-note .dp-day-dot {
@@ -136,30 +160,36 @@
 	background: var(--text-on-accent);
 }
 
-.dp-day-plan h3,
-.dp-week-tracker h3 {
-	margin: 0 0 8px;
-	font-size: 1.05em;
+/* Prominent per-zone heading: the selected day's date. */
+.dp-day-plan > h3 {
+	margin: 0 0 4px;
+	font-size: var(--font-ui-medium, 1.3em);
+	font-weight: 700;
+	color: var(--text-normal);
 }
 
+/* Quiet section labels, shared between the task/schedule blocks and the week tracker heading. */
+.dp-week-header > h3,
 .dp-day-plan h4 {
-	margin: 0 0 6px;
+	margin: 0 0 8px;
 	color: var(--text-muted);
-	font-size: 0.85em;
+	font-size: var(--font-ui-smaller, 0.78em);
+	font-weight: 600;
 	text-transform: uppercase;
 	letter-spacing: 0.04em;
 }
 
 .dp-block {
 	background: var(--background-secondary);
-	border-radius: 8px;
-	padding: 10px;
-	margin-bottom: 10px;
+	border-radius: var(--radius-m, 8px);
+	padding: 14px 16px;
+	margin-bottom: 12px;
 }
 
 .dp-empty {
-	color: var(--text-muted);
-	font-size: 0.9em;
+	color: var(--text-faint);
+	font-size: var(--font-ui-small, 0.88em);
+	font-style: italic;
 	padding: 4px 0;
 }
 
@@ -168,7 +198,7 @@
 	display: flex;
 	align-items: center;
 	gap: 8px;
-	padding: 4px 0;
+	padding: 5px 0;
 }
 
 .dp-check-row input[type="checkbox"] {
@@ -179,7 +209,7 @@
 	display: flex;
 	align-items: center;
 	gap: 6px;
-	margin-top: 8px;
+	margin-top: 10px;
 }
 
 .dp-flex-input {
@@ -193,43 +223,124 @@
 	width: 110px;
 }
 
+.dp-flex-input:focus,
+.dp-time-input:focus {
+	outline: none;
+	border-color: var(--interactive-accent);
+	box-shadow: 0 0 0 2px color-mix(in srgb, var(--interactive-accent) 25%, transparent);
+}
+
 .dp-inline-form button {
 	margin: 0;
 	white-space: nowrap;
 }
 
 .dp-week-tracker {
-	position: sticky;
-	bottom: 0;
-	margin-top: 4px;
-	padding-top: 10px;
+	display: flex;
+	flex-direction: column;
+	/* Fills whatever the panel has left after the top zone (calendar + day plan)
+	   and the drag handle - a tall docked panel or a handle dragged upward shows
+	   more habit rows with no scroll at all, a short one scrolls just this list.
+	   min-height matches MIN_ZONE_HEIGHT_PX in PlannerView.ts so the drag clamp
+	   and this floor agree. */
+	flex: 1 1 0;
+	min-height: 120px;
+	padding-top: 14px;
 	border-top: 1px solid var(--background-modifier-border);
-	background: var(--background-primary);
 }
 
-.dp-week-range,
-.dp-progress {
+.dp-week-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 8px;
+	flex: 0 0 auto;
+}
+
+.dp-edit-habits-btn {
+	width: 28px;
+	height: 28px;
+	font-size: 1em;
 	color: var(--text-muted);
-	font-size: 0.9em;
-	margin-bottom: 8px;
+}
+
+.dp-edit-habits-btn:hover {
+	color: var(--text-normal);
+}
+
+.dp-habit-editor {
+	display: flex;
+	flex: 0 0 auto;
+	flex-direction: column;
+	gap: 2px;
+	background: var(--background-secondary);
+	border-radius: var(--radius-m, 8px);
+	padding: 10px 12px;
+	margin: 8px 0 12px;
+}
+
+.dp-habit-editor .dp-inline-form {
+	margin-top: 6px;
+}
+
+.dp-habit-editor-label {
+	flex: 0 0 auto;
+	color: var(--text-muted);
+	font-size: var(--font-ui-smaller, 0.78em);
+	white-space: nowrap;
+}
+
+.dp-week-range {
+	flex: 0 0 auto;
+	color: var(--text-muted);
+	font-size: var(--font-ui-small, 0.9em);
+	margin-bottom: 10px;
 }
 
 .dp-progress {
+	flex: 0 0 auto;
+	margin-bottom: 14px;
+}
+
+.dp-progress-track {
+	height: 8px;
+	border-radius: 999px;
+	background: var(--background-modifier-border);
+	overflow: hidden;
+}
+
+.dp-progress-fill {
+	height: 100%;
+	border-radius: 999px;
+	background: var(--interactive-accent);
+	transition: width 0.2s ease;
+}
+
+.dp-progress-label {
+	margin-top: 6px;
+	color: var(--text-muted);
+	font-size: var(--font-ui-small, 0.85em);
 	font-variant-numeric: tabular-nums;
 	letter-spacing: 0.02em;
+}
+
+.dp-week-table-wrap {
+	flex: 1 1 auto;
+	min-height: 0;
+	overflow-y: auto;
 }
 
 .dp-week-table {
 	display: flex;
 	flex-direction: column;
-	gap: 2px;
+	gap: 6px;
 }
 
 .dp-week-row {
 	display: grid;
-	grid-template-columns: minmax(72px, 1.4fr) repeat(7, 1fr);
+	grid-template-columns: minmax(84px, 1.4fr) repeat(7, 1fr);
 	align-items: center;
-	gap: 2px;
+	gap: 4px;
 }
 
 .dp-week-row.is-head {
@@ -238,8 +349,8 @@
 }
 
 .dp-week-habit-name {
-	font-size: 0.9em;
-	padding-right: 6px;
+	font-size: var(--font-ui-small, 0.9em);
+	padding: 0 8px 0 2px;
 	text-transform: capitalize;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -257,11 +368,23 @@
 }
 
 .dp-week-check {
-	display: flex;
-	justify-content: center;
-	margin: 0;
+	--dp-habit-color: var(--interactive-accent);
+	width: 24px;
+	height: 24px;
+	margin: 0 auto;
+	padding: 0;
+	display: block;
+	border-radius: 50%;
+	border: 2px solid var(--dp-habit-color);
+	background: transparent;
+	cursor: pointer;
+	transition: background-color 0.15s ease, transform 0.1s ease;
 }
 
-.dp-week-check input[type="checkbox"] {
-	margin: 0;
+.dp-week-check:hover {
+	transform: scale(1.12);
+}
+
+.dp-week-check.is-done {
+	background: var(--dp-habit-color);
 }

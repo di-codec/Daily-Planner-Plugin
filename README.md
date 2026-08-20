@@ -1,237 +1,174 @@
-# Daily Planner Obsidian Plugin Documentation
+# Daily Planner Plugin
 
-Welcome to the documentation for the Daily Planner Obsidian plugin! This plugin helps users manage tasks, track health habits (e.g., workouts), and generate weekly summaries with visualizations. It automates file creation, task migration, and reporting in your Obsidian vault.
-The plugin is built in TypeScript and integrates with Obsidian's API to create structured folders, daily/weekly files, and interactive elements like checkboxes and stacked bar charts.
-
-## Table of Contents
-
-- Overview
-- Features
-- Installation
-- Usage
-
-	- Ribbon Icon and Commands
-	- Folder Structure
-	- Tasks
-	- Health Tracker
-	- Weekly Summaries
-	- Charts and Visualizations
-
-
-- Configuration
-- Code Structure
-- Troubleshooting
-- Contributing
-- License
-
-## Overview
-This plugin creates a structured system in your Obsidian vault under the "Daily Planner" folder. It includes:
-
-- **Tasks:** Daily task lists with automatic migration of unfinished tasks.
-- **Health Tracker:** Weekly tables for tracking habits like workouts, with checkboxes (requires "Markdown Table Checkboxes" plugin for full interactivity).
-- **Summaries:** Weekly overviews with progress bars, task statistics, and stacked bar charts for habits.
-
-The plugin uses Obsidian's markdown features for checklists and custom code blocks for charts. It ensures folders are created dynamically and handles date-based file naming.
-Screenshots of example outputs:
-
-- **Health Tracker Summary:** A stacked bar chart showing completed habits per day.
-<img width="1511" height="854" alt="image" src="https://github.com/user-attachments/assets/86ec4d8d-5904-4473-93b3-da925d407009" />
-
-- **Task Summary:** Progress bar and stats for completed tasks.
-<img width="1524" height="604" alt="image" src="https://github.com/user-attachments/assets/76adc6b1-b3e1-4c70-8ab5-0dd562f8ac01" />
-
-
-- **Health Tracker Table:** Weekly grid with checkboxes for habits.
-<img width="1608" height="1049" alt="image" src="https://github.com/user-attachments/assets/9f290733-fb50-43e0-a2df-fa0c25108623" />
-
-- **Tasks List:** Daily checklist of tasks.
-<img width="1782" height="1049" alt="image" src="https://github.com/user-attachments/assets/42fff976-889e-47e5-aa02-eb348cabd62c" />
-
-
-## Features
-
-- **Automatic File Creation:** Creates daily files for tasks and weekly files for health tracking.
-- **Task Migration:** Moves unfinished tasks from yesterday to today's file.
-- **Habit Tracking:** Weekly tables with dynamic muscle groups/habits (inherits from previous weeks or uses defaults), requiring "Markdown Table Checkboxes" for interactive checkboxes.
-- **Summaries and Stats:** Generates a "Summary.md" file with:
-
-	- Task completion percentage and averages.
-	- Stacked bar charts for habit completion.
-
-
-- **Custom Charts:** Renders stacked bar charts from YAML code blocks.
-- **Notifications:** Uses Obsidian's Notice system for feedback (e.g., "File created!").
-- **Dynamic Inheritance:** Health tracker pulls muscle groups from the previous week's file.
-- **No External Dependencies:** Relies on Obsidian's API and built-in libraries like Chart.js (imported in `stacked-bar-chart.ts`), except for the "Markdown Table Checkboxes" plugin.
-
-## Installation
-
-1. Download the Plugin:
-
-	- Clone or download the repository to your local machine.
-	- Copy the plugin files (e.g., `main.ts`, `manifest.json`, etc.) to your Obsidian vault's plugins folder: `your-vault/.obsidian/plugins/daily-planner/`.
-
-
-2. Manifest File:
-	- Ensure you have a `manifest.json` file in the plugin folder. Example:
-
-```json
-	{
-  "id": "daily-planner",
-  "name": "Daily Planner",
-  "version": "1.0.0",
-  "minAppVersion": "0.15.0",
-  "description": "Manage tasks, health tracking, and summaries in Obsidian.",
-  "author": "Diana Percatkina",
-  "isDesktopOnly": false
-}
-```
-3. Enable the Plugin:
-
-	- Open Obsidian > Settings > Community Plugins > Browse (if not installed via BRAT).
-	- Or use the Beta Reviewers Auto-update Tester (BRAT) plugin to install from GitHub.
-	- Enable "Daily Planner" in the plugin list.
-
-5. Install Required Plugin:
-
-	- Install the "Markdown Table Checkboxes" plugin from the Obsidian Community Plugins to enable interactive checkboxes in the health tracker tables.
-	- Navigate to Settings > Community Plugins, search for "Markdown Table Checkboxes", install, and enable it.
-
-5. Build (if developing):
-
-	- Install dependencies: `npm install` (requires Node.js).
-	- Build: `npm run build`.
-	- Reload Obsidian.
+An [Obsidian](https://obsidian.md) plugin for planning your day: a calendar, a daily
+task checklist and schedule, and a weekly habit tracker - all backed by plain
+Markdown notes in your vault.
 
 ## Usage
-### Ribbon Icon and Commands
 
-- **Ribbon Icon:** Click the circle icon (added via `addIcon('circle', ...)`) to initialize the plugin. This creates the "Daily Planner" folder structure, migrates tasks, generates health trackers, and updates summaries.
-- **Commands** (accessible via Command Palette - Ctrl/Cmd + P):
+Click the calendar-with-checkmark ribbon icon (or run **Add task for today** /
+**Migrate legacy Daily Planner notes** from the command palette) to open the
+**Daily Planner** panel:
 
-	- **Add Task:** Creates today's tasks file and lists tasks.
-	- **Create Weekly Health Tracker:** Generates the weekly health table (interactive checkboxes require "Markdown Table Checkboxes" plugin).
-	- **Create Chart File:** (For testing) Creates a demo stacked bar chart file.
+- **Calendar** - a month grid with prev/next navigation. Days with content are
+  marked with a dot; click a day to select it.
+- **Day plan** - the selected day's task checklist and schedule, each with an
+  inline form to add a new entry.
+- **Week tracker** - sticked to the bottom, always shows the *current* week's
+  task completion and habit grid, independent of whichever day is selected
+  above.
 
-### Folder Structure
-The plugin creates the following structure in your vault:
+Each day is stored as its own note at
+`<root folder>/Daily/YYYY/MM/YYYY-MM-DD.md`, with habits and schedule in the
+frontmatter and tasks as a checklist in the body:
 
-```text
-Daily Planner/
-├── ✅ Tasks/
-│   ├── YYYY Year/
-│   │   ├── 📅 Month/
-│   │   │   └── 📅 DD Month.md  (Daily task files)
-├── ❤️ Health Tracker/
-│   ├── 📅 Month/
-│   │   └── DD - DD.md  (Weekly habit tables)
-└── Summary.md  (Weekly summary with charts and stats)
+```yaml
+---
+habits:
+  legs: true
+  back: false
+schedule:
+  - time: "09:00"
+    title: Team sync
+---
+# 19 August 2026
+
+- [x] Do task A
+- [ ] Do task B
 ```
 
-### Tasks
+The habit list and root folder are configurable from the plugin's settings tab.
 
-- Daily files are created in `Daily Planner/✅ Tasks/YYYY Year/📅 Month/📅 DD Month.md`.
-- Tasks are markdown checklists (e.g.,` - [ ] Task description`).
-- Unfinished tasks (`- [ ]`) migrate automatically to the next day when the ribbon icon is clicked.
-- Add tasks programmatically via `appendSelfDevelopmentTask(app, file, task)` from `selfDev.ts`.
+## Hiding daily notes from the file explorer
 
-Example file content:
+The plugin deliberately stores one Markdown file per day rather than one big
+file, so Dataview/Tasks queries, backlinks to a specific day, and per-day git
+history all keep working normally. The only downside is that the file
+explorer's tree can look cluttered with a folder nobody actually browses by
+hand, since all interaction goes through the **Daily Planner** panel.
 
-```text
-# ✅ Tasks - DD/MM/YYYY
+The settings tab has an optional toggle, **"Hide daily notes from the file
+explorer"** (off by default), that adds `<root
+folder>/Daily` to Obsidian's own **Excluded files** list (Settings → Files
+and Links → Excluded files) - the same global mechanism you'd configure by
+hand. Turning it off removes exactly that one entry, leaving anything else
+already in your excluded-files list untouched. In both cases the note files
+themselves are never moved, renamed, or deleted - only their visibility in
+the explorer and search changes, and the panel's own access to them is
+unaffected.
 
-- [x] test-1
-- [x] test-2
-- [ ] test-3
+This uses an internal Obsidian API (`vault.getConfig`/`setConfig`) that isn't
+part of the documented plugin API and could change in a future Obsidian
+release; the plugin checks it's available before touching anything, and if
+it ever isn't, the toggle shows a notice asking you to add the folder to
+Excluded files by hand instead - which you can always do regardless, as a
+manual alternative that doesn't depend on this plugin at all.
+
+## Architecture
+
+The codebase is split into two layers:
+
+```mermaid
+flowchart TB
+    subgraph core["src/core - pure TypeScript, zero \"obsidian\" imports"]
+        dates["dates, paths"]
+        data["habits, schedule, tasks"]
+        note["noteContent (frontmatter parse/serialize)"]
+        week["weekSummary, legacyImport"]
+        debounce["debounce"]
+    end
+
+    subgraph obsidian["src/obsidian - thin adapter + UI"]
+        repo["DailyNoteRepository\n(Vault I/O only)"]
+        store["PlannerStore\n(observable state)"]
+        views["calendarView / dayPlanView /\nweekTrackerView / PlannerModal"]
+        settings["settings tab"]
+    end
+
+    main["main.ts (plugin entry)"]
+
+    obsidian -->|imports, never the reverse| core
+    repo --> store
+    store --> views
+    main --> repo
+    main --> settings
+    main --> views
 ```
 
-### Health Tracker
+- **`src/core/`** has no dependency on the `obsidian` package and is fully
+  unit-tested without mocks (see [Tests](#tests)). It owns all business logic:
+  date/week math, habit and schedule normalization, task parsing and the
+  unfinished-task migration, week aggregation, legacy-data parsing, and
+  frontmatter parsing/serialization. An ESLint rule
+  (`no-restricted-imports` on `src/core/**`) enforces the boundary in CI -
+  core importing from `obsidian` or `src/obsidian` is a lint error, not just a
+  convention.
+- **`src/obsidian/`** only reads/writes the Vault and renders UI; it contains
+  no business logic itself, just calls into `src/core`.
+  - `DailyNoteRepository` reads/writes daily notes. Frontmatter is parsed from
+    plain file text (`core/noteContent`) rather than through
+    `metadataCache`/`processFrontMatter`, so reads never race a
+    not-yet-reindexed cache after a write. Writes are debounced per file
+    (250ms, coalescing rapid checkbox/habit toggles) and flushed immediately
+    when the modal closes or the plugin unloads.
+  - `PlannerStore` is a small hand-rolled observable store (not a framework -
+    see below) holding the modal's state. Each of the three UI zones
+    subscribes and re-renders only when the state keys it cares about change;
+    in particular the week tracker never re-renders when only the selected
+    day changes.
 
-- Weekly files are created in `Daily Planner/❤️ Health Tracker/📅 Month/DD - DD.md`.
-- Table format with checkboxes for habits (e.g., Glutes, Legs). Interactive checkboxes require the "Markdown Table Checkboxes" plugin.
-- Habits inherit from the previous week's file or use defaults: ["Glutes", "Legs", "Back", "Brists", "Shoulders", "Jogging", "Yoga"].
-- Checkboxes are HTML inputs for interactivity, fully functional with the required plugin.
+**Known limitation:** frontmatter is fully regenerated on every write (not a
+line-by-line patch), so hand-added YAML comments in a daily note won't survive
+an edit made through the plugin. Acceptable since these are plugin-owned,
+plugin-generated files.
 
-Example table (as shown in the screenshot):
-| Weekdays           | Mo                                           | Tu                                           | We                                           | Th                                           | Fr                                           | Sa                                           | Su                                           |
-| ------------------ | -------------------------------------------- | -------------------------------------------- | -------------------------------------------- | -------------------------------------------- | -------------------------------------------- | -------------------------------------------- | -------------------------------------------- |
-| Daily Habits Track | 11 Aug                                       | 12 Aug                                       | 13 Aug                                       | 14 Aug                                       | 15 Aug                                       | 16 Aug                                       | 17 Aug                                       |
-| Glutes             |  ✅  |✅  |    |  |  |    |  |
-| Legs               |    |  | ✅   |  |  |    | ✅  |
-| Back               |    |  |    |  |  |    |  |
-| Brists             |    |  |    | ✅ |  |    ✅ |  |
-| Shoulders          |    |  |    |  | ✅ |    |  |
-| Jogging            |  ✅  |  |    |  |  |    |  |
-| Yoga               |    |  |    | ✅ |  |    |  |
+### Why not Svelte?
 
+Obsidian plugins commonly reach for Svelte (via `esbuild-svelte`) for
+interactive UI. Here the UI is one modal with three zones and no reusable
+components across views, so a compiler, a new file type, and a framework
+dependency would add real build complexity for a problem a ~150-line
+hand-rolled store already solves cleanly - and the store itself is testable
+without any DOM.
 
-### Weekly Summaries
+## Tests
 
-- Generated in `Daily Planner/Summary.md`.
-- Includes:
+`src/core/` has Vitest coverage with no Obsidian mocks (the core/adapter split
+makes this possible): date/week math including month- and year-boundary
+weeks, frontmatter parse/serialize round-trips and graceful fallback on
+missing/corrupt frontmatter, habit and schedule normalization, the
+unfinished-task migration, and legacy-data parsing. `src/obsidian/` is
+intentionally not unit-tested - a realistic Vault/MetadataCache fake would be
+substantial for low return - and should be exercised manually inside a real
+vault instead.
 
-	- Health Tracker chart (stacked bar for habits).
-	- Task progress bar (e.g., █████░░░░░ 50%).
-	- Stats: Total tasks, completed, remaining, average per day.
-
-
-- Updated when ribbon icon is clicked or via commands.
-
-### Charts and Visualizations
-
-- Uses a custom `stacked-bar-chart` code block in markdown.
-- Parses YAML for labels, datasets, and colors.
-- Renders with Chart.js.
-- Example YAML:
-
-```text
-stacked-bar-chart
-labels:
-  - Monday
-  - Tuesday
-datasets:
-  - label: Glutes
-    data: [1, 0]
-    backgroundColor: "#FF69B4"
+```bash
+npm test        # run once
+npm run test:watch
 ```
 
-## Configuration
+## Development
 
-- Hardcoded paths in managers (e.g., `mainFileDirectory: "Daily Planner"`, `taskFileDirectory: "✅ Tasks"`, `healthTrackerFileDirectory: "❤️ Health Tracker"`). Edit in `selfDevModel.ts`, `healthTrackerModel.ts`, etc.
-- Default habits and colors in `summaryManager.ts` and `healthTrackerModel.ts`.
-- No user-facing settings tab yet (add via `PluginSettingTab` if needed).
+```bash
+npm install
+npm run dev      # esbuild watch build
+npm run lint
+npm run typecheck
+npm run build    # production build -> main.js
+```
 
-## Code Structure
+CI (`.github/workflows/ci.yml`) runs lint, typecheck, tests, and the
+production build on every push/PR.
 
-- **main.ts:** Plugin entry point. Initializes managers, adds commands/icons, handles onload/unload.
-- **selfDevModel.ts:** Manages daily task files, creation, migration, and reading.
-- **healthTrackerModel.ts:** Manages weekly health files, dynamic habits, and summaries.
-- **summaryManager.ts:** Generates summaries, reads tasks/habits, creates YAML for charts.
-- **selfDev.ts:** Utility to append tasks.
-- **stacked-bar-chart.ts:** Chart rendering logic with Chart.js and YAML parsing.
-- **utils.ts:** Folder creation utility.
+## Installing into a vault
 
-## Key Classes:
-
-- `SelfDevManager:` Task handling.
-- `HealthTrackerManager:` Habit tracking.
-- `SummaryManager:` Reporting and charts.
-
-## Troubleshooting
-
-- **File Not Found:** Ensure the ribbon icon is clicked to create folders/files.
-- **Chart Not Rendering:** Check YAML syntax in code blocks; use demo data for testing.
-- **Migration Issues:** Verify date formats and file paths.
-- **Errors in Console:** Check Obsidian's developer console (Ctrl/Cmd + Shift + I) for logs.
-- **Truncated Content:** Some code snippets are truncated in docs; refer to source files.
-- **Checkboxes Not Working:** Ensure "Markdown Table Checkboxes" plugin is installed and enabled.
-
-## Contributing
-
-- Fork the repo on GitHub.
-- Create a feature branch.
-- Submit a pull request with changes.
-- Issues: Report bugs or suggest features via GitHub Issues.
+Copy `manifest.json`, `main.js`, and `styles.css` from a build/release into
+`<vault>/.obsidian/plugins/daily-planner-plugin/` and enable the plugin from
+Obsidian's Community Plugins settings. Publishing to the official Community
+Plugins directory is a manual review process via a PR to
+[obsidianmd/obsidian-releases](https://github.com/obsidianmd/obsidian-releases)
+and isn't automated here.
 
 ## License
-MIT License. See LICENSE for details.
+
+MIT - see [LICENSE](LICENSE).

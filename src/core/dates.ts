@@ -1,4 +1,4 @@
-/** Local YYYY-MM-DD (not UTC — toISOString() can shift the day). */
+/** Local YYYY-MM-DD (not UTC - toISOString() can shift the day). */
 export function toISODate(date: Date): string {
 	const y = date.getFullYear();
 	const m = pad2(date.getMonth() + 1);
@@ -49,7 +49,7 @@ export function getStartOfWeek(date: Date): Date {
 }
 
 export function formatDayHeading(date: Date): string {
-	return date.toLocaleDateString("ru-RU", {
+	return date.toLocaleDateString("en-GB", {
 		day: "numeric",
 		month: "long",
 		year: "numeric",
@@ -57,7 +57,7 @@ export function formatDayHeading(date: Date): string {
 }
 
 export function formatMonthTitle(date: Date): string {
-	const title = date.toLocaleDateString("ru-RU", { month: "long", year: "numeric" });
+	const title = date.toLocaleDateString("en-GB", { month: "long", year: "numeric" });
 	return title.charAt(0).toUpperCase() + title.slice(1);
 }
 
