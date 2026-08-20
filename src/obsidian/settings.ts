@@ -4,6 +4,8 @@ import { DEFAULT_HABITS, DEFAULT_HABITS_SECTION_TITLE, DEFAULT_ROOT_FOLDER } fro
 import { normalizeHabitName, normalizeHabitNames, renameHabit } from "../core/habits";
 import { dailyFolderExcludePattern } from "../core/paths";
 
+export type DayPlanLayout = "stacked" | "columns";
+
 export interface DailyPlannerSettings {
 	habits: string[];
 	rootFolder: string;
@@ -14,6 +16,10 @@ export interface DailyPlannerSettings {
 	hideDailyFolder: boolean;
 	/** The exact pattern this plugin last successfully added to Excluded files, so a later rootFolder change (or a load-time re-sync) can find and swap out exactly that entry - never null while hideDailyFolder has ever been successfully applied. */
 	lastAppliedExcludePattern: string | null;
+	/** Tasks/Schedule arrangement in the day-plan zone: stacked (one above the other) or side-by-side columns. */
+	dayPlanLayout: DayPlanLayout;
+	showTasks: boolean;
+	showSchedule: boolean;
 }
 
 export const DEFAULT_SETTINGS: DailyPlannerSettings = {
@@ -23,6 +29,9 @@ export const DEFAULT_SETTINGS: DailyPlannerSettings = {
 	splitTopHeight: null,
 	hideDailyFolder: false,
 	lastAppliedExcludePattern: null,
+	dayPlanLayout: "stacked",
+	showTasks: true,
+	showSchedule: true,
 };
 
 export class DailyPlannerSettingTab extends PluginSettingTab {
@@ -71,6 +80,19 @@ export class DailyPlannerSettingTab extends PluginSettingTab {
 				text.onChange(async (value) => {
 					const trimmed = value.trim();
 					this.plugin.settings.habitsSectionTitle = trimmed || DEFAULT_HABITS_SECTION_TITLE;
+					await this.plugin.saveSettings();
+				});
+			});
+
+		new Setting(containerEl)
+			.setName("Day plan layout")
+			.setDesc("Arrange Tasks and Schedule stacked (one above the other) or side by side. Can also be switched from the day-plan zone itself.")
+			.addDropdown((dropdown) => {
+				dropdown.addOption("stacked", "Stacked");
+				dropdown.addOption("columns", "Side by side");
+				dropdown.setValue(this.plugin.settings.dayPlanLayout);
+				dropdown.onChange(async (value) => {
+					this.plugin.settings.dayPlanLayout = value as DayPlanLayout;
 					await this.plugin.saveSettings();
 				});
 			});
