@@ -167,7 +167,7 @@ function formatWeekRange(start: Date, end: Date): string {
 	const startMonth = start.toLocaleDateString("en-GB", { month: "long" });
 	const endMonth = end.toLocaleDateString("en-GB", { month: "long" });
 	if (startMonth === endMonth && start.getFullYear() === end.getFullYear()) {
-		return `${start.getDate()}–${end.getDate()} ${startMonth} ${start.getFullYear()}`;
+		return `${start.getDate()}-${end.getDate()} ${startMonth} ${start.getFullYear()}`;
 	}
-	return `${start.getDate()} ${startMonth} – ${end.getDate()} ${endMonth} ${end.getFullYear()}`;
+	return `${start.getDate()} ${startMonth} - ${end.getDate()} ${endMonth} ${end.getFullYear()}`;
 }
