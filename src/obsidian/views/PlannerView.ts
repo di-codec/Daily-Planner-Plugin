@@ -2,7 +2,7 @@ import { ItemView, WorkspaceLeaf } from "obsidian";
 import { DailyNoteRepository } from "../dailyNoteRepository";
 import { PlannerStore } from "../store";
 import { mountCalendarView } from "./calendarView";
-import { mountDayPlanView } from "./dayPlanView";
+import { DayPlanSettingsAccess, mountDayPlanView } from "./dayPlanView";
 import { HabitSettingsAccess, mountWeekTrackerView } from "./weekTrackerView";
 
 export const VIEW_TYPE_PLANNER = "daily-planner-view";
@@ -27,6 +27,7 @@ export class PlannerView extends ItemView {
 		dailyNotes: DailyNoteRepository,
 		private habitSettings: HabitSettingsAccess,
 		private layoutSettings: LayoutSettingsAccess,
+		private dayPlanSettings: DayPlanSettingsAccess,
 	) {
 		super(leaf);
 		this.icon = "calendar-with-checkmark";
@@ -64,7 +65,7 @@ export class PlannerView extends ItemView {
 
 		this.unsubscribers = [
 			mountCalendarView(calendarEl, this.store),
-			mountDayPlanView(dayPlanEl, this.store),
+			mountDayPlanView(dayPlanEl, this.store, this.dayPlanSettings),
 			mountWeekTrackerView(weekEl, this.store, this.habitSettings),
 		];
 
