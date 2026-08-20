@@ -168,6 +168,69 @@
 	color: var(--text-normal);
 }
 
+.dp-day-plan-controls {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 6px;
+	margin-bottom: 10px;
+}
+
+.dp-toggle-btn {
+	margin: 0;
+	padding: 4px 10px;
+	font-size: var(--font-ui-smaller, 0.78em);
+	font-weight: 600;
+	border-radius: var(--radius-s, 6px);
+	background: var(--background-secondary);
+	color: var(--text-normal);
+	border: 1px solid transparent;
+	cursor: pointer;
+	white-space: nowrap;
+	transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.dp-toggle-btn:hover {
+	background: var(--background-modifier-hover);
+}
+
+.dp-toggle-btn.is-off {
+	background: transparent;
+	color: var(--text-faint);
+	border-color: var(--background-modifier-border);
+}
+
+.dp-layout-btn {
+	margin-left: auto;
+}
+
+/* Stacked (default): Tasks then Schedule, one above the other. Columns: side by side. */
+.dp-day-plan-blocks {
+	display: flex;
+	flex-direction: column;
+}
+
+.dp-day-plan-blocks.is-columns {
+	flex-direction: row;
+	align-items: flex-start;
+	gap: 12px;
+}
+
+.dp-day-plan-blocks.is-columns > .dp-block {
+	flex: 1 1 0;
+	min-width: 0;
+	margin-bottom: 0;
+}
+
+/* Fixed height (about 4 rows) instead of growing the whole block with the list -
+   scrolls internally past that, in both layout modes. The add-new-item form
+   below each list is never part of the scroll region. */
+.dp-task-list,
+.dp-schedule-list {
+	max-height: 140px;
+	overflow-y: auto;
+}
+
 /* Quiet section labels, shared between the task/schedule blocks and the week tracker heading. */
 .dp-week-header > h3,
 .dp-day-plan h4 {
