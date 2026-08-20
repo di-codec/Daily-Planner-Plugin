@@ -1,180 +1,202 @@
-// main.ts
-import { Notice, Plugin, addIcon, TAbstractFile, TFolder, TFile, WorkspaceLeaf, ItemView } from 'obsidian';
-import { SelfDevManager } from './models/selfDevModel';
-import { HealthTrackerManager } from "./models/healthTrackerModel";
-import { SummaryManager } from "./models/summaryManager";
-import {TableChart } from './utils/stacked-bar-chart';
-import { PassThrough } from 'stream';
+import { Notice, Plugin, WorkspaceLeaf } from "obsidian";
+import { DEFAULT_HABITS, DEFAULT_HABITS_SECTION_TITLE, DEFAULT_ROOT_FOLDER } from "./src/core/constants";
+import { normalizeHabitNames } from "./src/core/habits";
+import { dailyFolderExcludePattern } from "./src/core/paths";
+import { addExcludePattern, removeExcludePattern, replaceExcludePattern } from "./src/obsidian/excludedFiles";
+import { DailyNoteRepository } from "./src/obsidian/dailyNoteRepository";
+import { DailyPlannerSettingTab, DEFAULT_SETTINGS, DailyPlannerSettings } from "./src/obsidian/settings";
+import { TableChart } from "./src/obsidian/stackedBarChart";
+import { LayoutSettingsAccess, PlannerView, VIEW_TYPE_PLANNER } from "./src/obsidian/views/PlannerView";
+import { DayPlanSettingsAccess } from "./src/obsidian/views/dayPlanView";
+import { TextPromptModal } from "./src/obsidian/views/TextPromptModal";
+import { HabitSettingsAccess } from "./src/obsidian/views/weekTrackerView";
 
+const WIDE_LAYOUT_BREAKPOINT_PX = 900;
 
-export default class MyPlugin extends Plugin {
-    private selfDevManager: SelfDevManager;
-    private healthTrackerManager: HealthTrackerManager;
-    private summaryManager: SummaryManager;
-    private chart: TableChart;
+export default class DailyPlannerPlugin extends Plugin {
+	settings!: DailyPlannerSettings;
+	private dailyNotes!: DailyNoteRepository;
+	private chart!: TableChart;
+	private habitSettings!: HabitSettingsAccess;
+	private layoutSettings!: LayoutSettingsAccess;
+	private dayPlanSettings!: DayPlanSettingsAccess;
 
-    async onload() {
+	async onload() {
+		await this.loadSettings();
+		this.dailyNotes = new DailyNoteRepository(
+			this.app,
+			() => this.settings.habits,
+			() => this.settings.rootFolder,
+			() => this.settings.habitsSectionTitle,
+		);
+		this.habitSettings = {
+			getHabits: () => this.settings.habits,
+			getHabitsSectionTitle: () => this.settings.habitsSectionTitle,
+			saveHabits: async (habits) => {
+				this.settings.habits = habits;
+				await this.saveSettings();
+			},
+			saveHabitsSectionTitle: async (title) => {
+				this.settings.habitsSectionTitle = title;
+				await this.saveSettings();
+			},
+		};
+		this.layoutSettings = {
+			getSplitTopHeight: () => this.settings.splitTopHeight,
+			saveSplitTopHeight: async (px) => {
+				this.settings.splitTopHeight = px;
+				await this.saveSettings();
+			},
+		};
+		this.dayPlanSettings = {
+			getLayout: () => this.settings.dayPlanLayout,
+			saveLayout: async (layout) => {
+				this.settings.dayPlanLayout = layout;
+				await this.saveSettings();
+			},
+			getShowTasks: () => this.settings.showTasks,
+			saveShowTasks: async (visible) => {
+				this.settings.showTasks = visible;
+				await this.saveSettings();
+			},
+			getShowSchedule: () => this.settings.showSchedule,
+			saveShowSchedule: async (visible) => {
+				this.settings.showSchedule = visible;
+				await this.saveSettings();
+			},
+		};
+		await this.syncDailyFolderExclusion();
+		await this.saveSettings();
+		this.chart = new TableChart();
+		this.addSettingTab(new DailyPlannerSettingTab(this.app, this));
 
-        console.log('loading plugin 🚀');
+		this.registerView(
+			VIEW_TYPE_PLANNER,
+			(leaf) => new PlannerView(leaf, this.dailyNotes, this.habitSettings, this.layoutSettings, this.dayPlanSettings),
+		);
 
-        addIcon('circle', '<circle cx="50" cy="50" r="50" fill="currentColor"/>');
+		this.registerMarkdownCodeBlockProcessor("stacked-bar-chart", (source, el) => {
+			this.chart.renderChart(source, el);
+		});
 
-        // Initialize SummaryManager
-        this.summaryManager = new SummaryManager(this.app);
+		this.addCommand({
+			id: "add-task",
+			name: "Add task for today",
+			callback: () => {
+				new TextPromptModal(this.app, "Add Task", "Task text", async (text) => {
+					await this.dailyNotes.addTask(new Date(), text);
+					new Notice(`Task added: ${text}`);
+				}).open();
+			},
+		});
 
-        //================== Chart TEST ==========================
-        
-        this.chart = new TableChart()
-        // Register the code block
-        this.registerMarkdownCodeBlockProcessor("stacked-bar-chart", (source, el) => {
-            this.chart.renderChart(source, el);
-        });
+		this.addCommand({
+			id: "migrate-legacy-daily-planner",
+			name: "Migrate legacy Daily Planner notes",
+			callback: async () => {
+				await this.dailyNotes.migrateLegacyData();
+			},
+		});
 
-        // Command for auto-creating a file
-        this.addCommand({
-            id: "create-stacked-bar-chart-file",
-            name: "📊 Create Chart File",
-        });
-        //============================================
+		this.addCommand({
+			id: "open-daily-planner-popout",
+			name: "Open Daily Planner in a new window",
+			callback: () => this.openPlannerPopout(),
+		});
 
+		this.addRibbonIcon("calendar-with-checkmark", "Daily Planner", () => {
+			void this.activatePlannerView();
+		});
+	}
 
-        this.selfDevManager = new SelfDevManager(this.app, {
-            mainFileDirectory: "Daily Planner",
-            taskFileDirectory: "✅Tasks" 
-        });
+	async onunload() {
+		await this.dailyNotes.flushAll();
+	}
 
-        // Adding tasks command
-        this.addCommand({
-        id: 'add-task',
-        name: 'Add Task',
-        callback: async () => {
-            await this.selfDevManager.createDailyFile();
-            const tasks = await this.selfDevManager.getTodayTasks();
-            new Notice(`Today tasks: ${tasks.length > 0 ? tasks.join(', ') : 'no tasks'}`);
-        }
-        });
+	/** Reuses an already-open planner leaf if there is one; otherwise opens a new split (right if wide, bottom if narrow). */
+	private async activatePlannerView(): Promise<void> {
+		const { workspace } = this.app;
+		const existing = workspace.getLeavesOfType(VIEW_TYPE_PLANNER);
+		if (existing.length > 0) {
+			await workspace.revealLeaf(existing[0]);
+			return;
+		}
 
-        this.healthTrackerManager = new HealthTrackerManager(this.app, {
-            mainFileDirectory: "Daily Planner",
-            healthTrackerFileDirectory: "❤️Health Tracker"
-        });
+		const isWide = workspace.containerEl.clientWidth > WIDE_LAYOUT_BREAKPOINT_PX;
+		const leaf: WorkspaceLeaf = workspace.getLeaf("split", isWide ? "vertical" : "horizontal");
+		await leaf.setViewState({ type: VIEW_TYPE_PLANNER, active: true });
+		await workspace.revealLeaf(leaf);
+	}
 
-        // Adding Health Tracker command
-        this.addCommand({
-            id: 'track health',
-            name: 'Create Weekly Health Tracker',
-            callback: async () => {
-                await this.healthTrackerManager.createWeeklyFile();
-                const tasks = await this.healthTrackerManager.getThisWeekSummary();
-                new Notice(`Health Tracker created: ${tasks.length > 0 ? tasks.join(', ') : 'No content'}`);
-            }
-        });
+	/**
+	 * Moves the planner into its own OS-level window (desktop only), or opens a
+	 * fresh one there if it isn't open anywhere yet. This is the same native
+	 * "move to new window" mechanic every Obsidian tab supports (also reachable
+	 * by right-clicking the tab, or dragging it out of the main window) - this
+	 * command just makes it a one-click action instead of something to discover.
+	 */
+	private openPlannerPopout(): void {
+		const { workspace } = this.app;
+		const leaves = workspace.getLeavesOfType(VIEW_TYPE_PLANNER);
+		if (leaves.length > 0) {
+			workspace.moveLeafToPopout(leaves[0]);
+			return;
+		}
+		const leaf = workspace.openPopoutLeaf();
+		void leaf.setViewState({ type: VIEW_TYPE_PLANNER, active: true });
+	}
 
-        // Structure and tasks manager creation through 2ribbon icon"
-        this.addRibbonIcon('circle', 'Manager', async () => {
-            const folderPath = "Daily Planner";
-            const folderSelfDevPath = "✅Tasks";
-            const folderHealthTrackerPath = "❤️Health Tracker";
-            const filePathSelfDev = `${folderPath}/${folderSelfDevPath}`;
-            const folderPathHealth = `${folderPath}/${folderHealthTrackerPath}`;
-            // Summary file
-            const summaryFilePath = `${folderPath}/Summary.md`;
+	/**
+	 * Reconciles Obsidian's global Excluded files list against `hideDailyFolder`.
+	 * Called on every load (so a pattern manually removed from Excluded files, or
+	 * a reinstall with `data.json` intact, self-heals) and whenever the toggle or
+	 * root folder changes from the settings tab. Tracking `lastAppliedExcludePattern`
+	 * (rather than always deriving it fresh from the current root folder) is what
+	 * lets this also clean up a *stale* entry from a previous root folder name -
+	 * without it, a rootFolder change that bypassed this method (e.g. a hand-edited
+	 * data.json) would leave an orphaned pattern in the list forever, since nothing
+	 * would know an old value ever existed to remove.
+	 *
+	 * Returns false only when the underlying (undocumented) Obsidian API isn't
+	 * available and something was supposed to change - callers show a Notice.
+	 */
+	async syncDailyFolderExclusion(): Promise<boolean> {
+		const previousPattern = this.settings.lastAppliedExcludePattern;
 
-            // Folder checking and creation
-            let folder = this.app.vault.getAbstractFileByPath(folderPath);
-            if (!folder) {
-                console.log('Creating folder:', folderPath);
-                await this.app.vault.createFolder(folderPath);
-                new Notice('Directory "Daily Planner" created!');
-                folder = this.app.vault.getAbstractFileByPath(folderPath);
-            }
+		if (!this.settings.hideDailyFolder) {
+			if (!previousPattern) {
+				return true;
+			}
+			const removed = removeExcludePattern(this.app, previousPattern);
+			if (removed) {
+				this.settings.lastAppliedExcludePattern = null;
+			}
+			return removed;
+		}
 
-            //=================== TASKS ====================================
+		const currentPattern = dailyFolderExcludePattern(this.settings.rootFolder);
+		const applied =
+			previousPattern && previousPattern !== currentPattern
+				? replaceExcludePattern(this.app, previousPattern, currentPattern)
+				: addExcludePattern(this.app, currentPattern);
+		if (applied) {
+			this.settings.lastAppliedExcludePattern = currentPattern;
+		}
+		return applied;
+	}
 
-            // Creatin "Tasks" Folder
-            if (!this.app.vault.getAbstractFileByPath(`${folderPath}/${folderSelfDevPath}`)) {
-                console.log(`Creating inside directory 'Tasks': ${folderSelfDevPath}`);
-                await this.app.vault.createFolder(`${folderPath}/${folderSelfDevPath}`);
-                new Notice('Inside directory "✅Tasks" created!');
-            }
+	async loadSettings() {
+		const loaded = (await this.loadData()) as Partial<DailyPlannerSettings> | null;
+		this.settings = Object.assign({}, DEFAULT_SETTINGS, loaded ?? {});
+		this.settings.habits = normalizeHabitNames(this.settings.habits);
+		if (this.settings.habits.length === 0) {
+			this.settings.habits = [...DEFAULT_HABITS];
+		}
+		this.settings.rootFolder = this.settings.rootFolder.trim() || DEFAULT_ROOT_FOLDER;
+		this.settings.habitsSectionTitle = this.settings.habitsSectionTitle.trim() || DEFAULT_HABITS_SECTION_TITLE;
+	}
 
-            // Checking and Creation "Tasks" folder
-            let fileSelfDev = this.app.vault.getAbstractFileByPath(filePathSelfDev);
-            if (!fileSelfDev) {
-                console.log('✅ Creating file:', filePathSelfDev);
-                fileSelfDev = await this.app.vault.createFolder(filePathSelfDev);
-                new Notice('✅ Direction "✅Tasks" created!');
-            }
-
-            if (fileSelfDev instanceof TFolder) {
-                await this.selfDevManager.createDailyFile(); // Creating the section for today
-                const tasks = await this.selfDevManager.getTodayTasks();
-
-                // Checking if tasks have been transferred today 
-                const today = new Date().toLocaleDateString("en-GB");
-                
-                const todayFilePath = this.selfDevManager.getFilePathByDate(new Date());
-                const todayFile = this.app.vault.getAbstractFileByPath(todayFilePath) as TFile;
-
-                if (todayFile) {
-                    let content = await this.app.vault.read(todayFile);
-                    const migrationMarker = `Migrated: ${today}\n`;
-                    if (!content.includes(migrationMarker)){
-                        try{
-                            await this.selfDevManager.migrateUnfinishedTasks();
-                            await this.app.vault.append(todayFile,`- [ ] \n-----------------\n${migrationMarker}`);
-                            new Notice (`Transferred unfinished tasks for today!`);
-                        } catch (error) {
-                            new Notice (`Error mimgrating tasks: ${error.message}`);
-                        }
-                    } else{
-                        PassThrough
-                    }
-                }
-            }
-
-            // ================= HEALTH TRACKER ================================
-
-            // Creating "Health Tracker" Folder 
-            if (!this.app.vault.getAbstractFileByPath(`${folderPath}/${folderHealthTrackerPath}`)) {
-                await this.app.vault.createFolder(`${folderPath}/${folderHealthTrackerPath}`);
-                new Notice('Inside directory "❤️Health Tracker" created!');
-            }
-
-            // Checking and Create "Health Tracker" folder
-            let filePathHealthTracker = this.app.vault.getAbstractFileByPath(folderPathHealth);
-            if (!filePathHealthTracker) {
-                filePathHealthTracker = await this.app.vault.createFolder(folderPathHealth);
-                new Notice('✅ Direction "❤️Health Tracker" created!');
-            }
-
-            if (filePathHealthTracker instanceof TFolder) {
-                await this.healthTrackerManager.createWeeklyFile();
-                const summary =  await this.healthTrackerManager.getThisWeekSummary();
-                new Notice (`${summary}`);
-                // Generate summary after creating the tracker
-                const dailyTasks = await this.summaryManager.readDailyTasksFile(new Date());
-                await this.summaryManager.generateWeeklySummary(dailyTasks, new Date(), "Daily Planner/Summary.md");
-            }
-
-            // Create or update Summary.md
-            let summaryFile = this.app.vault.getAbstractFileByPath(summaryFilePath) as TFile | null;
-            if (!summaryFile) {
-                await this.app.vault.create(summaryFilePath, "# Summary\n\nInitial summary content.");
-                new Notice('Summary.md created!');
-            }
-        });
-       
-        //================== SUMMARY =========================
-
-        // SummaryManager Initialization
-        const summaryManager = new SummaryManager(this.app);
-        const dailyTasks = await summaryManager.readDailyTasksFile(new Date());
-        await summaryManager.generateWeeklySummary(dailyTasks, new Date(), "Daily Planner/Summary.md");
-    }
-
-    async onunload() {
-        console.log('unloading plugin ⛔');
-    }
+	async saveSettings() {
+		await this.saveData(this.settings);
+	}
 }
-

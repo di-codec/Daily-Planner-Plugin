@@ -1,10 +1,6 @@
 import { App } from "obsidian";
 
-/**
- * Recursively creates all folders in the specified path if they do not exist.
- * @param app - Instance of Obsidian `App`
- * @param filePath - Full path to the file (including the file name)
- */
+/** Recursively creates every folder in `filePath`'s ancestry that doesn't exist yet. */
 export async function ensureFoldersExist(app: App, filePath: string): Promise<void> {
 	const parts = filePath.split("/");
 	parts.pop(); // remove the file name

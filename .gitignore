@@ -5,12 +5,16 @@
 *.iml
 .idea
 
+# Claude Code local settings (permission allowlist etc.) — machine/dev-local, not shared
+.claude
+
 # npm
 node_modules
 
 # Don't include the compiled main.js file in the repo.
 # They should be uploaded to GitHub releases instead.
 main.js
+dist
 
 # Exclude sourcemaps
 *.map

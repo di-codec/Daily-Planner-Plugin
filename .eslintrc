@@ -19,5 +19,13 @@
       "@typescript-eslint/ban-ts-comment": "off",
       "no-prototype-builtins": "off",
       "@typescript-eslint/no-empty-function": "off"
-    } 
+    },
+    "overrides": [
+      {
+        "files": ["src/core/**/*.ts"],
+        "rules": {
+          "no-restricted-imports": ["error", { "patterns": ["obsidian", "**/obsidian/**"] }]
+        }
+      }
+    ]
   }
