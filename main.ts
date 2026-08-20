@@ -7,6 +7,7 @@ import { DailyNoteRepository } from "./src/obsidian/dailyNoteRepository";
 import { DailyPlannerSettingTab, DEFAULT_SETTINGS, DailyPlannerSettings } from "./src/obsidian/settings";
 import { TableChart } from "./src/obsidian/stackedBarChart";
 import { LayoutSettingsAccess, PlannerView, VIEW_TYPE_PLANNER } from "./src/obsidian/views/PlannerView";
+import { DayPlanSettingsAccess } from "./src/obsidian/views/dayPlanView";
 import { TextPromptModal } from "./src/obsidian/views/TextPromptModal";
 import { HabitSettingsAccess } from "./src/obsidian/views/weekTrackerView";
 
@@ -18,6 +19,7 @@ export default class DailyPlannerPlugin extends Plugin {
 	private chart!: TableChart;
 	private habitSettings!: HabitSettingsAccess;
 	private layoutSettings!: LayoutSettingsAccess;
+	private dayPlanSettings!: DayPlanSettingsAccess;
 
 	async onload() {
 		await this.loadSettings();
@@ -46,6 +48,23 @@ export default class DailyPlannerPlugin extends Plugin {
 				await this.saveSettings();
 			},
 		};
+		this.dayPlanSettings = {
+			getLayout: () => this.settings.dayPlanLayout,
+			saveLayout: async (layout) => {
+				this.settings.dayPlanLayout = layout;
+				await this.saveSettings();
+			},
+			getShowTasks: () => this.settings.showTasks,
+			saveShowTasks: async (visible) => {
+				this.settings.showTasks = visible;
+				await this.saveSettings();
+			},
+			getShowSchedule: () => this.settings.showSchedule,
+			saveShowSchedule: async (visible) => {
+				this.settings.showSchedule = visible;
+				await this.saveSettings();
+			},
+		};
 		await this.syncDailyFolderExclusion();
 		await this.saveSettings();
 		this.chart = new TableChart();
@@ -53,7 +72,7 @@ export default class DailyPlannerPlugin extends Plugin {
 
 		this.registerView(
 			VIEW_TYPE_PLANNER,
-			(leaf) => new PlannerView(leaf, this.dailyNotes, this.habitSettings, this.layoutSettings),
+			(leaf) => new PlannerView(leaf, this.dailyNotes, this.habitSettings, this.layoutSettings, this.dayPlanSettings),
 		);
 
 		this.registerMarkdownCodeBlockProcessor("stacked-bar-chart", (source, el) => {
