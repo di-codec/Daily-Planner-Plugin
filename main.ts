@@ -79,6 +79,12 @@ export default class DailyPlannerPlugin extends Plugin {
 			},
 		});
 
+		this.addCommand({
+			id: "open-daily-planner-popout",
+			name: "Open Daily Planner in a new window",
+			callback: () => this.openPlannerPopout(),
+		});
+
 		this.addRibbonIcon("calendar-with-checkmark", "Daily Planner", () => {
 			void this.activatePlannerView();
 		});
@@ -101,6 +107,24 @@ export default class DailyPlannerPlugin extends Plugin {
 		const leaf: WorkspaceLeaf = workspace.getLeaf("split", isWide ? "vertical" : "horizontal");
 		await leaf.setViewState({ type: VIEW_TYPE_PLANNER, active: true });
 		await workspace.revealLeaf(leaf);
+	}
+
+	/**
+	 * Moves the planner into its own OS-level window (desktop only), or opens a
+	 * fresh one there if it isn't open anywhere yet. This is the same native
+	 * "move to new window" mechanic every Obsidian tab supports (also reachable
+	 * by right-clicking the tab, or dragging it out of the main window) - this
+	 * command just makes it a one-click action instead of something to discover.
+	 */
+	private openPlannerPopout(): void {
+		const { workspace } = this.app;
+		const leaves = workspace.getLeavesOfType(VIEW_TYPE_PLANNER);
+		if (leaves.length > 0) {
+			workspace.moveLeafToPopout(leaves[0]);
+			return;
+		}
+		const leaf = workspace.openPopoutLeaf();
+		void leaf.setViewState({ type: VIEW_TYPE_PLANNER, active: true });
 	}
 
 	/**
