@@ -100,9 +100,9 @@ flowchart TB
   date/week math, habit and schedule normalization, task parsing and the
   unfinished-task migration, week aggregation, legacy-data parsing, and
   frontmatter parsing/serialization. An ESLint rule
-  (`no-restricted-imports` on `src/core/**`) enforces the boundary in CI -
-  core importing from `obsidian` or `src/obsidian` is a lint error, not just a
-  convention.
+  (`no-restricted-imports` on `src/core/**` and `src/core_tests/**`) enforces
+  the boundary in CI - core (and its tests) importing from `obsidian` or
+  `src/obsidian` is a lint error, not just a convention.
 - **`src/obsidian/`** only reads/writes the Vault and renders UI; it contains
   no business logic itself, just calls into `src/core`.
   - `DailyNoteRepository` reads/writes daily notes. Frontmatter is parsed from
@@ -133,7 +133,8 @@ without any DOM.
 
 ## Tests
 
-`src/core/` has Vitest coverage with no Obsidian mocks (the core/adapter split
+`src/core/` has Vitest coverage (in `src/core_tests/`, kept separate from the
+source it tests) with no Obsidian mocks (the core/adapter split
 makes this possible): date/week math including month- and year-boundary
 weeks, frontmatter parse/serialize round-trips and graceful fallback on
 missing/corrupt frontmatter, habit and schedule normalization, the

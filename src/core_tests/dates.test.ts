@@ -7,7 +7,7 @@ import {
 	isSameDay,
 	parseISODate,
 	toISODate,
-} from "./dates";
+} from "../core/dates";
 
 describe("toISODate / parseISODate", () => {
 	it("round-trips and zero-pads", () => {

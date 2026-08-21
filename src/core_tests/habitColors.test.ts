@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { habitColor } from "./habitColors";
+import { habitColor } from "../core/habitColors";
 
 describe("habitColor", () => {
 	it("returns a fixed color for known default habits, case-insensitively", () => {

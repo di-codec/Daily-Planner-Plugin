@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dayCompletionPercent } from "./completion";
+import { dayCompletionPercent } from "../core/completion";
 
 describe("dayCompletionPercent", () => {
 	it("is 0 when there are no tasks or habits", () => {

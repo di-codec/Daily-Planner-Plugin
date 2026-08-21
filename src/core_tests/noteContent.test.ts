@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { parseNoteContent, serializeNoteContent } from "./noteContent";
-import { DailyNoteData } from "./types";
+import { parseNoteContent, serializeNoteContent } from "../core/noteContent";
+import { DailyNoteData } from "../core/types";
 
 const HABITS_TITLE = "Habits";
 

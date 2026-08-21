@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { dailyFolderExcludePattern, getDailyFolderPath, getDailyNotePath } from "./paths";
+import { dailyFolderExcludePattern, getDailyFolderPath, getDailyNotePath } from "../core/paths";
 
 describe("getDailyNotePath", () => {
 	it("produces a zero-padded YYYY/MM/YYYY-MM-DD.md path", () => {

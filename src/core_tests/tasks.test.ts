@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { appendTask, formatTaskLine, parseTaskItems, toggleTaskAt, unfinishedTasksToCopy } from "./tasks";
+import { appendTask, formatTaskLine, parseTaskItems, toggleTaskAt, unfinishedTasksToCopy } from "../core/tasks";
 
 describe("parseTaskItems", () => {
 	it("parses [ ], [x], and [X], ignoring non-task lines", () => {

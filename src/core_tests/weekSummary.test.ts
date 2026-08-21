@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { buildWeekSummary, DaySnapshot } from "./weekSummary";
-import { getStartOfWeek, toISODate } from "./dates";
+import { buildWeekSummary, DaySnapshot } from "../core/weekSummary";
+import { getStartOfWeek, toISODate } from "../core/dates";
 
 function day(date: Date, tasksTotal: number, tasksCompleted: number, habits: Record<string, boolean>): DaySnapshot {
 	const tasks = [
