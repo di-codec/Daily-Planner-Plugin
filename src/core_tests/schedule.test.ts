@@ -5,7 +5,7 @@ import {
 	normalizeSchedule,
 	normalizeTime,
 	parseScheduleChecklist,
-} from "./schedule";
+} from "../core/schedule";
 
 describe("normalizeTime", () => {
 	it("zero-pads a valid single-digit hour", () => {

@@ -8,7 +8,7 @@ import {
 	normalizeHabits,
 	parseHabitChecklist,
 	renameHabit,
-} from "./habits";
+} from "../core/habits";
 
 describe("defaultHabits", () => {
 	it("maps every known name to false", () => {

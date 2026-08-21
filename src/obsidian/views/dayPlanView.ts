@@ -102,7 +102,7 @@ export function mountDayPlanView(
 		const layoutBtn = controls.createEl("button", { cls: "dp-toggle-btn dp-layout-btn" });
 		layoutBtn.setAttr("type", "button");
 		const layout = settings.getLayout();
-		layoutBtn.setText(layout === "stacked" ? "Stacked" : "Columns");
+		layoutBtn.setText(layout === "stacked" ? "☰ Stacked" : "☷ Columns");
 		layoutBtn.setAttr("aria-label", "Switch Tasks/Schedule layout");
 		layoutBtn.addEventListener("click", () => {
 			const next: DayPlanLayout = settings.getLayout() === "stacked" ? "columns" : "stacked";

@@ -4,7 +4,7 @@ import {
 	parseLegacyHealthTable,
 	parseLegacyTaskPath,
 	parseTrackerDateCell,
-} from "./legacyImport";
+} from "../core/legacyImport";
 
 describe("parseLegacyTaskPath", () => {
 	it("parses a well-formed legacy task path", () => {
