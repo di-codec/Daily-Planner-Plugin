@@ -22,7 +22,7 @@
     },
     "overrides": [
       {
-        "files": ["src/core/**/*.ts"],
+        "files": ["src/core/**/*.ts", "src/core_tests/**/*.ts"],
         "rules": {
           "no-restricted-imports": ["error", { "patterns": ["obsidian", "**/obsidian/**"] }]
         }

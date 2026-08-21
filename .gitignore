@@ -5,7 +5,7 @@
 *.iml
 .idea
 
-# Claude Code local settings (permission allowlist etc.) — machine/dev-local, not shared
+# Claude Code local settings (permission allowlist etc.) - machine/dev-local, not shared
 .claude
 
 # npm
