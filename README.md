@@ -70,7 +70,7 @@ The codebase is split into two layers:
 
 ```mermaid
 flowchart TB
-    subgraph core["src/core - pure TypeScript, zero \"obsidian\" imports"]
+    subgraph core["src/core - pure TypeScript, zero 'obsidian' imports"]
         dates["dates, paths"]
         data["habits, schedule, tasks"]
         note["noteContent (frontmatter parse/serialize)"]
